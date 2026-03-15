@@ -530,10 +530,14 @@
 
             menuContainer.innerHTML = menu.map(m => {
                 const badge = m.is_het_hang ? '<span class="badge-het-hang">Đã hết hàng</span>' : '';
+                
+                // BỌC THÉP CHỐNG LỖI: Chuyển đổi các dấu nháy để không làm vỡ cấu trúc onclick
+                const tenMonSafe = m.ten_mon.replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, " ");
+
                 const controls = m.is_het_hang ? '' : `
                     <div class="qty-wrapper">
                         <input type="number" id="qty-${m.id}" value="1" min="1" max="20">
-                        <button class="btn-buy" onclick="xuLyMuaMon('${tenLop}', '${m.ten_mon}', ${m.gia_tien}, ${m.id})">Mua</button>
+                        <button class="btn-buy" onclick="xuLyMuaMon('${tenLop}', '${tenMonSafe}', ${m.gia_tien}, ${m.id})">Mua</button>
                     </div>`;
                 
                 return `
@@ -631,12 +635,15 @@
                     `<button style="padding:6px 12px; border-radius:6px; border:none; background:#28a745; color:white; font-weight:bold; cursor:pointer;" onclick="toggleHetHang(${m.id}, true)">Mở Bán</button>` : 
                     `<button style="padding:6px 12px; border-radius:6px; border:none; background:#6c757d; color:white; font-weight:bold; cursor:pointer;" onclick="toggleHetHang(${m.id}, false)">Báo Hết</button>`;
                 
+                // BỌC THÉP CHỐNG LỖI
+                const tenMonSafe = m.ten_mon.replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, " ");
+
                 return `
                     <div class="list-item" style="padding: 10px 15px;">
                         <div class="list-item-info"><strong>${m.ten_mon}</strong><span>${formatTien(m.gia_tien)}</span></div>
                         <div style="display:flex; gap:8px;">
                             ${btnStatus}
-                            <button class="btn-danger" style="width: auto; padding: 6px 12px; margin: 0; border-radius: 6px; border:none; cursor:pointer;" onclick="xoaMonLop(${m.id}, '${m.ten_mon}')">Xóa</button>
+                            <button class="btn-danger" style="width: auto; padding: 6px 12px; margin: 0; border-radius: 6px; border:none; cursor:pointer;" onclick="xoaMonLop(${m.id}, '${tenMonSafe}')">Xóa</button>
                         </div>
                     </div>`;
             }).join('');
