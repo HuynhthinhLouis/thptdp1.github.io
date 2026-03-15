@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DPIBANK - Ngân Hàng Số THPT Số 1 Đức Phổ</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        /* === BACKGROUND === */
+        body { 
+            display: flex; justify-content: center; align-items: center; 
+            min-height: 100vh; margin: 0; padding: 15px; 
+            overflow-x: hidden;
+        }
+        body::before {
+            content: ""; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: url('https://r73troypb4obj.vcdn.cloud/website02/storage/mq/ap/mqapa3tedrvhxuzrf8e3fuk2jk8o.jpg') center/cover no-repeat;
+            filter: blur(8px) brightness(0.4); transform: scale(1.1); z-index: -1;
+        }
+
+        /* KHUNG APP */
+        .app-container { 
+            background: white; border-radius: 20px; 
+            box-shadow: 0 15px 50px rgba(0,0,0,0.5); 
+            width: 100%; max-width: 400px; min-height: 85vh; 
+            position: relative; overflow: hidden; display: flex; flex-direction: column; 
+        }
+        .screen { padding: 25px; flex: 1; display: flex; flex-direction: column; }
+        
+        /* CÁC THÀNH PHẦN CHUNG */
+        h2 { color: #333; margin-bottom: 20px; margin-top: 0; text-align: center; }
+        .input-group { margin-bottom: 15px; text-align: left; }
+        .input-group label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;}
+        .input-group input { width: 100%; padding: 14px; border: 1.5px solid #e0e0e0; border-radius: 10px; font-size: 16px; outline: none; transition: 0.3s; background: #fafafa;}
+        .input-group input:focus { border-color: #007bff; background: white; box-shadow: 0 0 0 4px rgba(0,123,255,0.1); }
+        
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; color: white; cursor: pointer; transition: 0.3s; margin-bottom: 10px; }
+        .btn-primary { background: linear-gradient(135deg, #007bff, #0056b3); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,123,255,0.3); }
+        .btn-success { background: linear-gradient(135deg, #28a745, #218838); }
+        .btn-success:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(40,167,69,0.3); }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-warning { background: #ffc107; color: #333; }
+        .btn-secondary { background: #f8f9fa; color: #dc3545; border: 1px solid #f1f3f5; margin-top: auto; }
+        .btn-secondary:hover { background: #ffe3e3; }
+        
+        .hidden { display: none !important; }
+        
+        /* DASHBOARD */
+        .header-dpibank { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .logo-dpibank { font-size: 22px; font-weight: 900; color: #007bff; letter-spacing: 1px; font-style: italic; }
+        .user-greeting { font-size: 14px; color: #666; }
+        .user-greeting strong { color: #333; display: block; font-size: 16px; }
+
+        .credit-card { background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); color: white; border-radius: 18px; padding: 25px; position: relative; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.25); margin-bottom: 25px; }
+        .credit-card::after { content: ''; position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: rgba(255,255,255,0.05); border-radius: 50%; }
+        .credit-card::before { content: ''; position: absolute; bottom: -30px; left: -30px; width: 100px; height: 100px; background: rgba(255,255,255,0.05); border-radius: 50%; }
+        .card-chip { width: 45px; height: 35px; background: linear-gradient(135deg, #e6c27a, #d4af37); border-radius: 6px; margin-bottom: 20px; position: relative; overflow: hidden;}
+        .card-chip::after, .card-chip::before { content: ''; position: absolute; background: rgba(0,0,0,0.2); }
+        .card-chip::after { top: 50%; left: 0; width: 100%; height: 1px; }
+        .card-chip::before { left: 50%; top: 0; height: 100%; width: 1px; }
+        .card-balance-label { font-size: 12px; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+        .card-balance { font-size: 32px; font-weight: bold; margin: 0 0 20px 0; letter-spacing: 1px; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+        .card-footer { display: flex; justify-content: space-between; align-items: flex-end; }
+        .card-name { font-size: 15px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; }
+        .card-brand { font-size: 18px; font-weight: 900; font-style: italic; opacity: 0.9; }
+
+        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .action-box { background: white; border: 1px solid #eef2f5; border-radius: 16px; padding: 15px 10px; text-align: center; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
+        .action-box:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0,123,255,0.1); border-color: #cce5ff; }
+        .action-icon { width: 50px; height: 50px; background: #eef5ff; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; margin: 0 auto 10px auto; color: #007bff; }
+        .action-box.food .action-icon { background: #fff8e1; color: #ffc107; }
+        .action-box.history .action-icon { background: #e8f5e9; color: #28a745; }
+        .action-box.class-manage { grid-column: span 2; background: #f8f9fa; border-color: #dee2e6; display: none; }
+        .action-box.class-manage .action-icon { background: #e2e3e5; color: #495057; }
+        .action-box.class-manage:hover { border-color: #adb5bd; }
+        .action-title { font-size: 14px; font-weight: bold; color: #444; }
+
+        .header-top { display: flex; align-items: center; margin-bottom: 25px; }
+        .back-btn { background: #f8f9fa; border: none; color: #333; font-weight: bold; font-size: 18px; cursor: pointer; width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 15px; transition: 0.2s; }
+        .back-btn:hover { background: #e2e6ea; }
+
+        .menu-list { text-align: left; margin-top: 10px; max-height: 400px; overflow-y: auto; padding-right: 5px; }
+        .menu-list::-webkit-scrollbar { width: 5px; }
+        .menu-list::-webkit-scrollbar-thumb { background: #ccc; border-radius: 5px; }
+        .menu-item { background: #fff; border: 1px solid #e0e0e0; padding: 15px; border-radius: 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        .menu-item-info strong { display: block; font-size: 16px; color: #333; margin-bottom: 4px; }
+        .menu-item-info span { color: #007bff; font-weight: bold; font-size: 15px; }
+        .btn-buy { background: #eef5ff; border: 1px solid #007bff; color: #007bff; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-buy:hover { background: #007bff; color: white; }
+
+        /* MODAL VÀ THÔNG BÁO PUSH (TOAST) */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; pointer-events: none; transition: 0.3s; }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .modal-box { background: white; padding: 25px; border-radius: 16px; width: 85%; max-width: 320px; text-align: center; transform: scale(0.9); transition: 0.3s; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .modal-overlay.active .modal-box { transform: scale(1); }
+        .modal-icon { font-size: 45px; margin-bottom: 10px; }
+        .modal-title { font-size: 18px; font-weight: bold; margin-bottom: 10px; color: #333; }
+        .modal-message { font-size: 15px; color: #666; margin-bottom: 25px; line-height: 1.5; }
+        .modal-buttons { display: flex; gap: 12px; justify-content: center; }
+        .modal-btn { flex: 1; padding: 12px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 15px; transition: 0.2s; }
+        .modal-btn-cancel { background: #f1f3f5; color: #495057; }
+        .modal-btn-confirm { background: #007bff; color: white; }
+
+        .toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 10px; width: 90%; max-width: 350px; pointer-events: none; }
+        .toast { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-left: 5px solid #28a745; padding: 15px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); animation: slideDown 0.4s ease forwards, fadeOut 0.4s ease 4.5s forwards; display: flex; align-items: center; gap: 12px; }
+        .toast.class-fund { border-left-color: #ffc107; }
+        .toast-icon { font-size: 24px; }
+        .toast-content { text-align: left; }
+        .toast-title { font-weight: bold; font-size: 15px; color: #333; margin-bottom: 3px; }
+        .toast-desc { font-size: 13px; color: #555; }
+
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-20px); } }
+
+        /* HÓA ĐƠN */
+        .bill-wrapper { display: flex; flex-direction: column; align-items: center; text-align: center; margin-top: 20px;}
+        .bill-box { background: white; border: 1px solid #eee; padding: 25px; border-radius: 16px; margin-bottom: 30px; width: 100%; box-shadow: 0 10px 25px rgba(0,0,0,0.05); text-align: left; position: relative;}
+        .bill-box::before, .bill-box::after { content: ''; position: absolute; width: 20px; height: 20px; background: #eef2f5; border-radius: 50%; top: -10px; }
+        .bill-box::before { left: -10px; } .bill-box::after { right: -10px; }
+        .bill-row { display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 15px; color: #666; }
+        .bill-row strong { color: #222; text-align: right; max-width: 60%; }
+        .bill-divider { border-top: 2px dashed #eee; margin: 15px 0; }
+        .bill-total { font-size: 28px; font-weight: bold; color: #dc3545; text-align: center; margin-top: 10px; }
+        .success-icon { font-size: 60px; margin-bottom: 5px; color: #28a745; }
+    </style>
+</head>
+<body>
+
+    <div id="toast-wrapper" class="toast-container"></div>
+
+    <div id="custom-modal" class="modal-overlay">
+        <div class="modal-box">
+            <div id="modal-icon" class="modal-icon">⚠️</div>
+            <div id="modal-title" class="modal-title">Thông báo</div>
+            <div id="modal-message" class="modal-message">Nội dung</div>
+            <div class="modal-buttons" id="modal-buttons"></div>
+        </div>
+    </div>
+
+    <div class="app-container">
+        
+        <div id="login-screen" class="screen">
+            <div style="text-align: center; margin-bottom: 30px; margin-top: 20px;">
+                <h1 style="color: #007bff; font-style: italic; font-weight: 900; letter-spacing: 2px; margin: 0;">DPIBANK</h1>
+                <p style="color: #666; font-size: 14px; margin-top: 5px;">Ngân hàng số THPT Số 1 Đức Phổ</p>
+            </div>
+            
+            <div class="input-group">
+                <label>Số điện thoại</label>
+                <input type="tel" id="login-phone" placeholder="Nhập số điện thoại...">
+            </div>
+            <div class="input-group">
+                <label>Mật khẩu</label>
+                <input type="password" id="login-pass" placeholder="Nhập mật khẩu...">
+            </div>
+            
+            <button class="btn btn-primary" onclick="xuLyDangNhap()" style="margin-top: 20px;">Đăng Nhập</button>
+        </div>
+
+        <div id="reset-screen" class="screen hidden">
+            <div class="header-top"><h2>🔒 Đổi Mật Khẩu</h2></div>
+            <p style="color: #666; font-size: 14px; margin-bottom: 25px; text-align: center;">
+                Vì lý do bảo mật, bạn phải đổi mật khẩu mặc định trước khi sử dụng <b>DPIBANK</b>.
+            </p>
+            <div class="input-group">
+                <label>Mật khẩu mới</label>
+                <input type="password" id="new-pass" placeholder="Nhập mật khẩu mới...">
+            </div>
+            <div class="input-group">
+                <label>Xác nhận mật khẩu</label>
+                <input type="password" id="confirm-pass" placeholder="Nhập lại mật khẩu mới...">
+            </div>
+            <button class="btn btn-success" onclick="xuLyDoiMatKhau()" style="margin-top: 20px;">Cập Nhật</button>
+        </div>
+
+        <div id="dashboard-screen" class="screen hidden">
+            <div class="header-dpibank">
+                <div class="user-greeting">
+                    <span id="greeting-time">Chào buổi sáng,</span> <br>
+                    <strong id="greeting-name">Hưng Thịnh</strong>
+                </div>
+                <div class="logo-dpibank">DPIBANK</div>
+            </div>
+            
+            <div class="credit-card">
+                <div class="card-chip"></div>
+                <div class="card-balance-label">Số dư khả dụng</div>
+                <div class="card-balance" id="card-balance">0 VNĐ</div>
+                <div class="card-footer">
+                    <div class="card-name" id="card-name">HUYNH HUNG THINH</div>
+                    <div class="card-brand">DPI</div>
+                </div>
+            </div>
+            
+            <h4 style="margin: 0 0 15px 0; color: #555;">Dịch vụ tiện ích</h4>
+            <div class="action-grid">
+                <div class="action-box" onclick="hienThiManHinh('transfer-screen')">
+                    <div class="action-icon">💸</div>
+                    <div class="action-title">Chuyển Tiền</div>
+                </div>
+                <div class="action-box food" onclick="hienThiManHinh('food-screen')">
+                    <div class="action-icon">🍔</div>
+                    <div class="action-title">Gian Hàng</div>
+                </div>
+                <div class="action-box history" onclick="xemLichSu()" style="grid-column: span 2;">
+                    <div class="action-icon">📜</div>
+                    <div class="action-title">Lịch Sử Giao Dịch</div>
+                </div>
+                <div class="action-box class-manage" id="btn-manage-class" onclick="vaoQuanLyLop()">
+                    <div class="action-icon">⚙️</div>
+                    <div class="action-title">Quản Lý Lớp</div>
+                </div>
+            </div>
+            
+            <button class="btn btn-secondary" onclick="dangXuat()">Đăng Xuất</button>
+        </div>
+
+        <div id="transfer-screen" class="screen hidden">
+            <div class="header-top">
+                <button class="back-btn" onclick="vaoTrangChu()">❮</button>
+                <h2 style="margin: 0;">Chuyển Tiền</h2>
+            </div>
+            <div class="input-group">
+                <label>SĐT người nhận</label>
+                <input type="tel" id="transfer-phone" placeholder="Nhập số điện thoại...">
+            </div>
+            <div class="input-group">
+                <label>Số tiền (VNĐ)</label>
+                <input type="number" id="transfer-amount" placeholder="Ví dụ: 20000">
+            </div>
+            <button class="btn btn-primary" onclick="xuLyChuyenTien()" style="margin-top: 20px;">Tiếp tục</button>
+        </div>
+
+        <div id="food-screen" class="screen hidden">
+            <div class="header-top">
+                <button class="back-btn" onclick="vaoTrangChu()">❮</button>
+                <h2 style="margin: 0;">Gian Hàng</h2>
+            </div>
+            <div class="input-group" style="display: flex; gap: 10px;">
+                <input type="text" id="food-class" placeholder="Nhập tên lớp (VD: 12A5)" style="text-transform: uppercase;">
+                <button class="btn btn-primary" style="width: auto; margin: 0; padding: 0 20px;" onclick="timMenu()">Tìm</button>
+            </div>
+            <div id="menu-container" class="menu-list">
+                <p style="text-align: center; color: #888; font-style: italic; margin-top: 30px;">Nhập mã lớp để xem thực đơn!</p>
+            </div>
+        </div>
+
+        <div id="history-screen" class="screen hidden">
+            <div class="header-top">
+                <button class="back-btn" onclick="vaoTrangChu()">❮</button>
+                <h2 style="margin: 0;">Lịch Sử Cá Nhân</h2>
+            </div>
+            <div id="history-container" class="menu-list" style="max-height: 70vh;"></div>
+        </div>
+
+        <div id="class-manage-screen" class="screen hidden">
+            <div class="header-top">
+                <button class="back-btn" onclick="vaoTrangChu()">❮</button>
+                <h2 style="margin: 0;">Quản Lý Lớp <span id="manage-class-name" style="color:#007bff;"></span></h2>
+            </div>
+
+            <div style="background: linear-gradient(135deg, #17a2b8, #117a8b); color: white; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 25px; box-shadow: 0 5px 15px rgba(23,162,184,0.3);">
+                <div style="font-size: 14px; opacity: 0.9;">Tổng Doanh Thu Gian Hàng</div>
+                <div id="class-revenue" style="font-size: 32px; font-weight: bold; margin-top: 5px;">0 VNĐ</div>
+            </div>
+
+            <h4 style="margin: 0 0 10px 0; color: #555;">Thêm món mới</h4>
+            <div style="display: flex; gap: 8px; margin-bottom: 20px; width: 100%; align-items: stretch;">
+                <input type="text" id="new-food-name" placeholder="Tên món..." style="flex: 1; min-width: 0; padding: 12px; border: 1px solid #e0e0e0; border-radius: 8px; outline: none;">
+                <input type="number" id="new-food-price" placeholder="Giá..." style="flex: 1; min-width: 0; padding: 12px; border: 1px solid #e0e0e0; border-radius: 8px; outline: none;">
+                <button class="btn btn-success" style="width: auto; margin: 0; padding: 0 15px; border-radius: 8px; flex-shrink: 0; white-space: nowrap;" onclick="themMonLop()">Thêm</button>
+            </div>
+
+            <h4 style="margin: 0 0 10px 0; color: #555;">Thực đơn hiện tại</h4>
+            <div id="manage-menu-container" class="menu-list" style="max-height: 200px; margin-top: 0;"></div>
+
+            <h4 style="margin: 20px 0 10px 0; color: #555; border-top: 1px dashed #ccc; padding-top: 15px;">Lịch sử bán hàng</h4>
+            <div id="manage-history-container" class="menu-list" style="max-height: 250px; margin-top: 0;"></div>
+        </div>
+
+        <div id="bill-screen" class="screen hidden" style="background: #f8f9fa;">
+            <div class="bill-wrapper">
+                <div class="success-icon">✅</div>
+                <h2 style="color: #28a745; margin-bottom: 25px;">Giao dịch thành công</h2>
+                <div class="bill-box">
+                    <div class="bill-row"><span>Mã GD:</span> <strong style="color: #007bff;">#DPI<script>document.write(Math.floor(Math.random()*90000)+10000)</script></strong></div>
+                    <div class="bill-row"><span>Thời gian:</span> <strong id="bill-time">--</strong></div>
+                    <div class="bill-divider"></div>
+                    <div class="bill-row"><span>Người gửi:</span> <strong id="bill-sender">--</strong></div>
+                    <div class="bill-row"><span>Người nhận:</span> <strong id="bill-receiver">--</strong></div>
+                    <div class="bill-row" id="bill-item-row" style="display: none;"><span>Nội dung:</span> <strong id="bill-item">--</strong></div>
+                    <div class="bill-divider"></div>
+                    <div class="bill-total" id="bill-amount">- 0 VNĐ</div>
+                </div>
+                <button class="btn btn-primary" onclick="vaoTrangChu()">Về Trang Chủ</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // ==========================================
+        // CẤU HÌNH SUPABASE
+        // ==========================================
+        const URL_SUPABASE = 'https://fiyhdugintgtlwvvartz.supabase.co';
+        const ANON_KEY_SUPABASE = 'sb_publishable_TkryPUlrB-SMF9Rtm0wenA_KpPraRrp'; 
+        const db = supabase.createClient(URL_SUPABASE, ANON_KEY_SUPABASE);
+        
+        let nguoiDungHienTai = null;
+        let realtimeChannel = null;
+
+        const formatTien = (tien) => new Intl.NumberFormat('vi-VN').format(tien) + " VNĐ";
+        function xoaDau(str) { return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toUpperCase(); }
+        function layCauChao() { const gio = new Date().getHours(); return (gio >= 5 && gio < 12) ? "Chào buổi sáng," : (gio >= 12 && gio < 18) ? "Chào buổi chiều," : "Chào buổi tối,"; }
+
+        // ==========================================
+        // UI THÔNG BÁO PUSH (TOAST)
+        // ==========================================
+        function hienThiToast(title, desc, isClassFund = false) {
+            const wrapper = document.getElementById('toast-wrapper');
+            const toast = document.createElement('div');
+            toast.className = `toast ${isClassFund ? 'class-fund' : ''}`;
+            
+            const icon = isClassFund ? '🎉' : '💸';
+            toast.innerHTML = `
+                <div class="toast-icon">${icon}</div>
+                <div class="toast-content">
+                    <div class="toast-title">${title}</div>
+                    <div class="toast-desc">${desc}</div>
+                </div>
+            `;
+            wrapper.appendChild(toast);
+            setTimeout(() => { if (wrapper.contains(toast)) wrapper.removeChild(toast); }, 5000);
+        }
+
+        // ==========================================
+        // HỆ THỐNG POPUP TÙY CHỈNH
+        // ==========================================
+        function showPopup(type, title, message, isConfirm = false) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('custom-modal');
+                const iconEl = document.getElementById('modal-icon');
+                document.getElementById('modal-title').innerText = title;
+                document.getElementById('modal-message').innerHTML = message.replace(/\n/g, '<br>');
+                const btnContainer = document.getElementById('modal-buttons');
+                
+                if (type === 'success') { iconEl.innerText = '✅'; iconEl.style.color = '#28a745'; }
+                else if (type === 'error') { iconEl.innerText = '❌'; iconEl.style.color = '#dc3545'; }
+                else if (type === 'warning') { iconEl.innerText = '🛡️'; iconEl.style.color = '#007bff'; }
+                else { iconEl.innerText = '💡'; iconEl.style.color = '#ffc107'; }
+
+                btnContainer.innerHTML = '';
+                if (isConfirm) {
+                    const btnCancel = document.createElement('button'); btnCancel.className = 'modal-btn modal-btn-cancel'; btnCancel.innerText = 'Hủy Bỏ';
+                    btnCancel.onclick = () => { modal.classList.remove('active'); resolve(false); };
+                    const btnConfirm = document.createElement('button'); btnConfirm.className = 'modal-btn modal-btn-confirm'; btnConfirm.innerText = 'Xác Nhận';
+                    btnConfirm.onclick = () => { modal.classList.remove('active'); resolve(true); };
+                    btnContainer.appendChild(btnCancel); btnContainer.appendChild(btnConfirm);
+                } else {
+                    const btnOk = document.createElement('button'); btnOk.className = 'modal-btn modal-btn-confirm'; btnOk.innerText = 'Đóng';
+                    btnOk.onclick = () => { modal.classList.remove('active'); resolve(true); };
+                    btnContainer.appendChild(btnOk);
+                }
+                modal.classList.add('active');
+            });
+        }
+        function hienLoi(msg) { return showPopup('error', 'Lỗi Giao Dịch', msg); }
+
+        function hienThiManHinh(idScreen) {
+            const screens = ['login-screen', 'reset-screen', 'dashboard-screen', 'transfer-screen', 'food-screen', 'class-manage-screen', 'bill-screen', 'history-screen'];
+            screens.forEach(s => document.getElementById(s).classList.add('hidden'));
+            document.getElementById(idScreen).classList.remove('hidden');
+        }
+
+        // ==========================================
+        // KIỂM TRA TRẠNG THÁI CỔNG
+        // ==========================================
+        async function kiemTraCong() {
+            const { data: sysConfig, error } = await db.from('system_config').select('is_open').eq('id', 1).single();
+            if (error || !sysConfig) {
+                await hienLoi("Lỗi hệ thống: Không thể kết nối với cổng thanh toán lúc này.");
+                return false;
+            }
+            if (!sysConfig.is_open) {
+                await hienLoi("⛔ CỔNG GIAO DỊCH ĐÃ ĐÓNG!\nBạn vẫn có thể xem số dư, nhưng không thể thao tác lúc này.");
+                return false;
+            }
+            return true;
+        }
+
+        // ==========================================
+        // LOGIC LẮNG NGHE GIAO DỊCH REALTIME
+        // ==========================================
+        function batDauLangNgheGiaoDich() {
+            if (realtimeChannel) db.removeChannel(realtimeChannel);
+
+            realtimeChannel = db.channel('public:transfers')
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'transfers' }, async (payload) => {
+                    if (!nguoiDungHienTai) return;
+                    
+                    const gd = payload.new; 
+                    const { data: receiverInfo } = await db.from('accounts').select('name').eq('id', gd.receiver_id).single();
+                    if (!receiverInfo) return;
+
+                    // 1. NHẬN TIỀN (Cá nhân)
+                    if (gd.receiver_id === nguoiDungHienTai.id) {
+                        nguoiDungHienTai.balance += gd.amount;
+                        if(document.getElementById('card-balance')) document.getElementById('card-balance').innerText = formatTien(nguoiDungHienTai.balance);
+                        hienThiToast(`Bạn vừa nhận +${formatTien(gd.amount)}`, `Nội dung: ${gd.description || 'Chuyển tiền'}`);
+                        return;
+                    }
+
+                    // 2. QUỸ LỚP CỦA MÌNH NHẬN TIỀN
+                    if (nguoiDungHienTai.lop && receiverInfo.name === `Quỹ Lớp ${nguoiDungHienTai.lop}`) {
+                        const { data: senderInfo } = await db.from('accounts').select('name').eq('id', gd.sender_id).single();
+                        const tenNguoiMua = senderInfo ? senderInfo.name : 'Khách';
+                        
+                        hienThiToast(`Lớp bạn vừa bán được hàng!`, `+${formatTien(gd.amount)} từ ${tenNguoiMua}<br>🛒 ${gd.description}`, true);
+
+                        if (!document.getElementById('class-manage-screen').classList.contains('hidden')) {
+                            tinhDoanhThuLop(); loadLichSuBanHang();
+                        }
+                    }
+                })
+                .subscribe();
+        }
+
+        // ==========================================
+        // ĐĂNG NHẬP & ĐĂNG XUẤT
+        // ==========================================
+        async function xuLyDangNhap() {
+            const phone = document.getElementById('login-phone').value.trim();
+            const pass = document.getElementById('login-pass').value.trim();
+            if (!phone || !pass) return hienLoi("Vui lòng nhập đầy đủ SĐT và Mật khẩu!");
+
+            const { data, error } = await db.from('accounts').select('*').eq('phone', phone).eq('password', pass).single();
+            if (error || !data) return hienLoi("Tài khoản hoặc mật khẩu không chính xác!");
+            
+            nguoiDungHienTai = data;
+            batDauLangNgheGiaoDich();
+
+            if (data.password === 'abc@123') hienThiManHinh('reset-screen');
+            else vaoTrangChu();
+        }
+
+        async function xuLyDoiMatKhau() {
+            const newPass = document.getElementById('new-pass').value.trim();
+            const confirmPass = document.getElementById('confirm-pass').value.trim();
+            if (newPass.length < 6) return hienLoi("Mật khẩu mới phải có ít nhất 6 ký tự!");
+            if (newPass === 'abc@123') return hienLoi("Vui lòng không dùng lại mật khẩu mặc định!");
+            if (newPass !== confirmPass) return hienLoi("Hai mật khẩu không khớp nhau!");
+
+            const { error } = await db.from('accounts').update({ password: newPass }).eq('id', nguoiDungHienTai.id);
+            if (error) return hienLoi("Hệ thống lỗi, không thể đổi mật khẩu lúc này!");
+            
+            await showPopup('success', 'Thành công', "Đổi mật khẩu thành công! Chào mừng đến với DPIBANK.");
+            vaoTrangChu();
+        }
+
+        async function vaoTrangChu() {
+            const { data } = await db.from('accounts').select('*').eq('id', nguoiDungHienTai.id).single();
+            if(data) nguoiDungHienTai = data;
+
+            document.getElementById('greeting-time').innerText = layCauChao();
+            document.getElementById('greeting-name').innerText = nguoiDungHienTai.name;
+            document.getElementById('card-name').innerText = xoaDau(nguoiDungHienTai.name);
+            document.getElementById('card-balance').innerText = formatTien(nguoiDungHienTai.balance);
+            
+            document.getElementById('btn-manage-class').style.display = (nguoiDungHienTai.lop && nguoiDungHienTai.is_lop_truong) ? 'block' : 'none';
+            hienThiManHinh('dashboard-screen');
+        }
+
+        async function dangXuat() {
+            const thoat = await showPopup('warning', 'Đăng xuất', 'Bạn có chắc chắn muốn thoát tài khoản DPIBANK?', true);
+            if (!thoat) return;
+            
+            if (realtimeChannel) db.removeChannel(realtimeChannel);
+            nguoiDungHienTai = null;
+            document.querySelectorAll('input').forEach(input => input.value = '');
+            hienThiManHinh('login-screen');
+        }
+
+        // ==========================================
+        // CHUYỂN TIỀN (CÓ CHẶN TỰ CHUYỂN QUỸ LỚP)
+        // ==========================================
+        async function xuLyChuyenTien() {
+            if (!(await kiemTraCong())) return;
+
+            const phoneNhan = document.getElementById('transfer-phone').value.trim();
+            const soTien = parseInt(document.getElementById('transfer-amount').value.trim());
+
+            if (!phoneNhan || isNaN(soTien) || soTien <= 0) return hienLoi("Dữ liệu không hợp lệ. Vui lòng kiểm tra lại!");
+            if (phoneNhan === nguoiDungHienTai.phone) return hienLoi("Bạn không thể tự chuyển tiền cho chính mình!");
+            if (soTien > nguoiDungHienTai.balance) return hienLoi("Số dư khả dụng không đủ!");
+
+            const { data: ngNhan, error: errTim } = await db.from('accounts').select('*').eq('phone', phoneNhan).single();
+            if (errTim || !ngNhan) return hienLoi("Không tìm thấy người nhận thuộc hệ thống DPIBANK!");
+
+            // CHẶN: Không cho tự chuyển tiền vào quỹ lớp mình
+            if (nguoiDungHienTai.lop && ngNhan.name === `Quỹ Lớp ${nguoiDungHienTai.lop}`) {
+                return hienLoi("⛔ Bạn không thể tự chuyển tiền vào quỹ của lớp mình!");
+            }
+
+            const xacNhan = await showPopup('warning', 'Xác nhận chuyển tiền', `Chuyển: ${formatTien(soTien)}\nĐến: ${ngNhan.name} (${ngNhan.lop || 'Khách'})\nSĐT: ${ngNhan.phone}`, true);
+            if (!xacNhan) return; 
+
+            if (!(await kiemTraCong())) return;
+            const note = `Chuyển tiền cho ${ngNhan.name}`;
+
+            await db.from('accounts').update({ balance: nguoiDungHienTai.balance - soTien }).eq('id', nguoiDungHienTai.id);
+            await db.from('accounts').update({ balance: ngNhan.balance + soTien }).eq('id', ngNhan.id);
+            await db.from('transfers').insert({ sender_id: nguoiDungHienTai.id, receiver_id: ngNhan.id, amount: soTien, description: note });
+
+            nguoiDungHienTai.balance -= soTien;
+            if(document.getElementById('card-balance')) document.getElementById('card-balance').innerText = formatTien(nguoiDungHienTai.balance);
+
+            hienThiBill(ngNhan.name, soTien, note);
+        }
+
+        // ==========================================
+        // MUA ĐỒ ĂN (CÓ CHẶN TỰ MUA LỚP MÌNH)
+        // ==========================================
+        async function timMenu() {
+            const tenLop = document.getElementById('food-class').value.trim().toUpperCase();
+            const menuContainer = document.getElementById('menu-container');
+            if (!tenLop) return hienLoi("Vui lòng nhập tên lớp cần tìm!");
+            
+            // CHẶN TỰ MUA ĐỒ CỦA LỚP MÌNH
+            if (nguoiDungHienTai.lop && nguoiDungHienTai.lop === tenLop) {
+                return hienLoi("⛔ Bạn không thể mua hàng từ gian hàng của chính lớp mình!");
+            }
+            
+            menuContainer.innerHTML = '<p style="text-align:center; color:#555;">Đang tải dữ liệu từ gian hàng...</p>';
+            const { data: menu, error } = await db.from('thuc_don').select('*').eq('lop', tenLop);
+            
+            if (error || !menu || menu.length === 0) {
+                menuContainer.innerHTML = `<p style="text-align:center; color:#dc3545; font-weight:bold;">Gian hàng ${tenLop} hiện chưa có món ăn nào!</p>`;
+                return;
+            }
+
+            menuContainer.innerHTML = menu.map(mon => `
+                <div class="menu-item">
+                    <div class="menu-item-info"><strong>${mon.ten_mon}</strong><span>${formatTien(mon.gia_tien)}</span></div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <input type="number" id="qty-${mon.id}" value="1" min="1" max="50" style="width: 50px; padding: 6px; text-align: center; border: 1px solid #ccc; border-radius: 8px;">
+                        <button class="btn-buy" onclick="xuLyMuaMon('${tenLop}', '${mon.ten_mon}', ${mon.gia_tien}, 'qty-${mon.id}')">Mua</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function xuLyMuaMon(tenLop, tenMon, giaTien, inputId) {
+            if (!(await kiemTraCong())) return;
+
+            // CHẶN BACKUP
+            if (nguoiDungHienTai.lop && nguoiDungHienTai.lop === tenLop) {
+                return hienLoi("⛔ Bạn không thể mua hàng từ gian hàng của chính lớp mình!");
+            }
+
+            const soLuong = parseInt(document.getElementById(inputId).value);
+            if (isNaN(soLuong) || soLuong < 1) return hienLoi("Số lượng không hợp lệ!");
+
+            const tongTien = giaTien * soLuong;
+            if (tongTien > nguoiDungHienTai.balance) return hienLoi("Số dư khả dụng không đủ!");
+            
+            const xacNhan = await showPopup('warning', 'Xác nhận thanh toán', `Gian hàng: Lớp ${tenLop}\nMón hàng: ${soLuong}x ${tenMon}\nTổng tiền: ${formatTien(tongTien)}`, true);
+            if (!xacNhan) return;
+            if (!(await kiemTraCong())) return;
+
+            let { data: accQuyLop } = await db.from('accounts').select('*').eq('lop', tenLop).eq('name', `Quỹ Lớp ${tenLop}`).single();
+
+            if (!accQuyLop) {
+                let nhomHieuChinh = tenLop.startsWith('10') ? 'Khối 10' : (tenLop.startsWith('11') ? 'Khối 11' : 'Khối 12');
+                const { data: taoMoi, error: errTao } = await db.from('accounts').insert({
+                    name: `Quỹ Lớp ${tenLop}`, phone: `QUY${tenLop}`, password: Math.random().toString(36), balance: 0, nhom: nhomHieuChinh, lop: tenLop
+                }).select().single();
+                if (errTao || !taoMoi) return hienLoi(`Lỗi! Không thể khởi tạo Quỹ lớp ${tenLop}.`);
+                accQuyLop = taoMoi;
+            }
+            
+            const note = `Mua ${soLuong}x ${tenMon}`;
+
+            await db.from('accounts').update({ balance: nguoiDungHienTai.balance - tongTien }).eq('id', nguoiDungHienTai.id);
+            await db.from('accounts').update({ balance: accQuyLop.balance + tongTien }).eq('id', accQuyLop.id);
+            await db.from('transfers').insert({ sender_id: nguoiDungHienTai.id, receiver_id: accQuyLop.id, amount: tongTien, description: note });
+
+            nguoiDungHienTai.balance -= tongTien;
+            if(document.getElementById('card-balance')) document.getElementById('card-balance').innerText = formatTien(nguoiDungHienTai.balance);
+
+            hienThiBill(accQuyLop.name, tongTien, note);
+        }
+
+        // ==========================================
+        // LỊCH SỬ CÁ NHÂN
+        // ==========================================
+        async function xemLichSu() {
+            hienThiManHinh('history-screen');
+            const container = document.getElementById('history-container');
+            container.innerHTML = '<p style="text-align:center;">Đang tải lịch sử...</p>';
+
+            const { data: gd, error } = await db.from('transfers').select('*').or(`sender_id.eq.${nguoiDungHienTai.id},receiver_id.eq.${nguoiDungHienTai.id}`).order('created_at', { ascending: false }).limit(30);
+
+            if (error || !gd || gd.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:#888;">Chưa có giao dịch nào.</p>'; return;
+            }
+
+            const listIds = [...new Set(gd.flatMap(t => [t.sender_id, t.receiver_id]))];
+            const { data: accounts } = await db.from('accounts').select('id, name, phone, lop').in('id', listIds);
+            const userMap = {}; if (accounts) accounts.forEach(acc => userMap[acc.id] = acc);
+
+            container.innerHTML = gd.map(t => {
+                const isGui = t.sender_id === nguoiDungHienTai.id;
+                const dau = isGui ? '-' : '+';
+                const mau = isGui ? '#dc3545' : '#28a745';
+                const doiTacInfo = isGui ? userMap[t.receiver_id] : userMap[t.sender_id];
+                const tenDoiTac = doiTacInfo?.name || 'Không rõ';
+                const sdtDoiTac = doiTacInfo?.phone || 'Ẩn SĐT';
+                const lopDoiTac = doiTacInfo?.lop ? ` - ${doiTacInfo.lop}` : ''; 
+                const tieuDe = isGui ? `Chuyển đến` : `Nhận từ`;
+                const thoiGian = new Date(t.created_at).toLocaleString('vi-VN', {hour: '2-digit', minute:'2-digit', day: '2-digit', month: '2-digit', year: 'numeric'});
+                const ghiChu = t.description ? `<br><span style="color:#555; background: #f1f3f5; padding: 4px 8px; border-radius: 4px; display: inline-block; margin-top: 5px; font-size: 12px;">📝 ${t.description}</span>` : '';
+
+                return `
+                    <div class="menu-item" style="flex-direction: column; align-items: flex-start; gap: 8px; padding: 15px;">
+                        <div style="display: flex; justify-content: space-between; width: 100%;">
+                            <strong style="font-size: 14px; color: #333;">${tieuDe}: <span style="color: #007bff;">${tenDoiTac}${lopDoiTac}</span></strong>
+                            <span style="color: ${mau}; font-weight: bold; font-size: 16px;">${dau}${formatTien(t.amount)}</span>
+                        </div>
+                        <div style="font-size: 13px; color: #444;">📞 SĐT: <strong>${sdtDoiTac}</strong></div>
+                        <div style="font-size: 12px; color: #888; border-top: 1px dashed #eee; width: 100%; padding-top: 8px; margin-top: 2px;">🕒 ${thoiGian}${ghiChu}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ==========================================
+        // QUẢN LÝ LỚP
+        // ==========================================
+        async function vaoQuanLyLop() {
+            if (!nguoiDungHienTai.is_lop_truong) return hienLoi("⛔ CẢNH BÁO: Chỉ Lớp trưởng mới có quyền truy cập!");
+            hienThiManHinh('class-manage-screen');
+            document.getElementById('manage-class-name').innerText = nguoiDungHienTai.lop;
+            tinhDoanhThuLop(); 
+            loadMenuQuanLy(); 
+            loadLichSuBanHang();
+        }
+
+        async function loadLichSuBanHang() {
+            const container = document.getElementById('manage-history-container');
+            container.innerHTML = '<p style="text-align:center; font-size: 13px;">Đang tải đơn hàng...</p>';
+
+            const { data: accQuyLop } = await db.from('accounts').select('id').eq('lop', nguoiDungHienTai.lop).eq('name', `Quỹ Lớp ${nguoiDungHienTai.lop}`).single();
+            if (!accQuyLop) return container.innerHTML = '<p style="text-align:center; color:#888; font-size: 13px;">Chưa có đơn hàng nào.</p>';
+
+            const { data: gd } = await db.from('transfers').select('*').eq('receiver_id', accQuyLop.id).ilike('description', 'Mua %').order('created_at', { ascending: false }).limit(50);
+            if (!gd || gd.length === 0) return container.innerHTML = '<p style="text-align:center; color:#888; font-size: 13px;">Chưa có ai mua hàng.</p>';
+
+            const listSenderIds = [...new Set(gd.map(t => t.sender_id))];
+            const { data: senders } = await db.from('accounts').select('id, name, lop, phone').in('id', listSenderIds);
+            const senderMap = {}; if (senders) senders.forEach(s => senderMap[s.id] = s);
+
+            container.innerHTML = gd.map(t => {
+                const thoiGian = new Date(t.created_at).toLocaleString('vi-VN', {hour: '2-digit', minute:'2-digit', day: '2-digit', month: '2-digit', year: 'numeric'});
+                const nguoiMua = senderMap[t.sender_id];
+                const tenMua = nguoiMua?.name || 'Khách';
+                const sdtMua = nguoiMua?.phone || 'Ẩn SĐT';
+                const lopMua = nguoiMua?.lop ? `(${nguoiMua.lop})` : '';
+
+                return `
+                    <div class="menu-item" style="padding: 12px; flex-direction: column; align-items: flex-start; gap: 6px;">
+                        <div style="display: flex; justify-content: space-between; width: 100%; font-size: 14px;">
+                            <strong>👤 ${tenMua} <span style="color:#007bff">${lopMua}</span></strong>
+                            <span style="color: #28a745; font-weight: bold;">+${formatTien(t.amount)}</span>
+                        </div>
+                        <div style="font-size: 13px; color: #444;">📞 SĐT: <strong>${sdtMua}</strong></div>
+                        <div style="font-size: 13px; color: #555; background: #eef5ff; padding: 6px; border-radius: 6px; width: 100%; border: 1px solid #cce5ff;">🛒 ${t.description}</div>
+                        <div style="font-size: 11px; color: #aaa; text-align: right; width: 100%;">🕒 ${thoiGian}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function tinhDoanhThuLop() {
+            document.getElementById('class-revenue').innerText = "Đang tính...";
+            const { data: accQuyLop } = await db.from('accounts').select('id').eq('lop', nguoiDungHienTai.lop).eq('name', `Quỹ Lớp ${nguoiDungHienTai.lop}`).single();
+            if (accQuyLop) {
+                const { data: trans } = await db.from('transfers').select('amount').eq('receiver_id', accQuyLop.id);
+                let total = 0; if (trans) total = trans.reduce((sum, t) => sum + t.amount, 0);
+                document.getElementById('class-revenue').innerText = formatTien(total);
+            } else {
+                document.getElementById('class-revenue').innerText = "0 VNĐ";
+            }
+        }
+
+        async function loadMenuQuanLy() {
+            const container = document.getElementById('manage-menu-container');
+            container.innerHTML = '<p style="text-align:center; color:#555;">Đang tải thực đơn...</p>';
+            
+            const { data: menu, error } = await db.from('thuc_don').select('*').eq('lop', nguoiDungHienTai.lop);
+            
+            if (error) {
+                container.innerHTML = '<p style="text-align:center; color:red;">Lỗi tải dữ liệu!</p>';
+                return;
+            }
+            
+            if (!menu || menu.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:#888; font-style:italic;">Lớp bạn chưa có món ăn nào.</p>';
+                return;
+            }
+
+            // Làm sạch container trước khi render
+            container.innerHTML = '';
+
+            menu.forEach(m => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'menu-item';
+                itemDiv.style.padding = '10px 15px';
+                
+                itemDiv.innerHTML = `
+                    <div class="menu-item-info">
+                        <strong>${m.ten_mon}</strong>
+                        <span>${formatTien(m.gia_tien)}</span>
+                    </div>
+                `;
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'btn-danger';
+                deleteBtn.style.cssText = 'width: auto; padding: 6px 12px; margin: 0; border-radius: 6px; border:none; cursor:pointer; font-size:13px;';
+                deleteBtn.innerText = 'Xóa';
+                
+                // Dùng addEventListener thay vì onclick="" để tránh lỗi SyntaxError do ký tự lạ
+                deleteBtn.addEventListener('click', () => xoaMonLop(m.id, m.ten_mon));
+                
+                itemDiv.appendChild(deleteBtn);
+                container.appendChild(itemDiv);
+            });
+        }
+
+        async function themMonLop() {
+            if (!nguoiDungHienTai.is_lop_truong) return hienLoi("Bạn không có quyền thực hiện thao tác này!");
+            const name = document.getElementById('new-food-name').value.trim();
+            const price = parseInt(document.getElementById('new-food-price').value.trim());
+            
+            if (!name || isNaN(price) || price <= 0) return hienLoi("Tên món và Giá không hợp lệ!");
+            const { error } = await db.from('thuc_don').insert({ lop: nguoiDungHienTai.lop, ten_mon: name, gia_tien: price });
+            if (error) return hienLoi("Không thể thêm món ăn, vui lòng thử lại!");
+            
+            document.getElementById('new-food-name').value = ''; document.getElementById('new-food-price').value = '';
+            loadMenuQuanLy(); showPopup('success', 'Thành công', 'Đã thêm món mới vào gian hàng!');
+        }
+
+        async function xoaMonLop(idMon, tenMon) {
+            if (!nguoiDungHienTai.is_lop_truong) return hienLoi("Bạn không có quyền này!");
+            
+            // Sử dụng biến xacNhanXoa thay vì confirm để tránh lỗi trình duyệt
+            const xacNhanXoa = await showPopup('warning', 'Xác nhận xóa', `Bạn có chắc chắn muốn xóa món [${tenMon}] khỏi thực đơn?`, true);
+            
+            if (xacNhanXoa === true) {
+                const { error } = await db.from('thuc_don').delete().eq('id', idMon);
+                
+                if (error) {
+                    console.error("Lỗi xóa:", error);
+                    return hienLoi("Lỗi hệ thống, không thể xóa món!");
+                }
+                
+                // Load lại danh sách sau khi xóa thành công
+                loadMenuQuanLy();
+                hienThiToast("Thành công", `Đã xóa món ${tenMon}`);
+            }
+        }
+
+        function hienThiBill(nguoiNhan, soTien, note) {
+            const now = new Date();
+            const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')} - ${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()}`;
+            
+            document.getElementById('bill-time').innerText = timeString;
+            document.getElementById('bill-sender').innerText = nguoiDungHienTai.name;
+            document.getElementById('bill-receiver').innerText = nguoiNhan;
+            document.getElementById('bill-amount').innerText = `- ${formatTien(soTien)}`;
+            const itemRow = document.getElementById('bill-item-row');
+            if (note) { itemRow.style.display = 'flex'; document.getElementById('bill-item').innerText = note; } 
+            else { itemRow.style.display = 'none'; }
+            hienThiManHinh('bill-screen');
+        }
+    </script>
+</body>
+</html>
