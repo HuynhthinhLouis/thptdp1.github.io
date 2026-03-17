@@ -69,6 +69,32 @@
         .card-name { font-size: 15px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; }
         .card-brand { font-size: 18px; font-weight: 900; font-style: italic; opacity: 0.9; }
 
+        /* NÚT HƯỚNG DẪN TRÊN THẺ */
+        .card-info-btn {
+            position: absolute;
+            top: 25px;
+            right: 25px;
+            width: 28px;
+            height: 28px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 15px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            transition: 0.3s;
+            z-index: 10;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        .card-info-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: scale(1.1);
+        }
+
         .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
         .action-box { background: white; border: 1px solid #eef2f5; border-radius: 16px; padding: 15px 10px; text-align: center; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
         .action-box:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0,123,255,0.1); border-color: #cce5ff; }
@@ -224,6 +250,8 @@
             </div>
             
             <div class="credit-card">
+                <div class="card-info-btn" onclick="hienHuongDanNapTien()">?</div>
+
                 <div class="card-chip"></div>
                 <div class="card-balance-label">Số dư khả dụng</div>
                 <div class="card-balance" id="card-balance">0 VNĐ</div>
@@ -360,6 +388,11 @@
             if(el && nguoiDungHienTai) {
                 el.innerText = isBalanceHidden ? "******" : formatTien(nguoiDungHienTai.balance);
             }
+        }
+
+        // HÀM HIỆN HƯỚNG DẪN NẠP TIỀN MỚI THÊM
+        function hienHuongDanNapTien() {
+            showPopup('info', 'Hướng dẫn nạp tiền', 'Tiền có thể nạp từ <b>Quầy giao dịch của Trường</b>.\n\nVui lòng gặp Thủ quỹ hoặc Ban quản trị DPIBANK để thực hiện nạp tiền mặt vào thẻ số.');
         }
 
         // ==========================================
