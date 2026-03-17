@@ -2,15 +2,8 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DPIBANK - Ngân Hàng Số</title>
-    
-    <link rel="manifest" href="manifest.json">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="DPIBANK">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2830/2830284.png">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DPIBANK - Ngân Hàng Số THPT Số 1 Đức Phổ</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -20,8 +13,6 @@
             display: flex; justify-content: center; align-items: center; 
             min-height: 100vh; margin: 0; padding: 15px; 
             overflow-x: hidden;
-            /* Ngăn kéo thả refresh trên mobile app */
-            overscroll-behavior-y: none; 
         }
         body::before {
             content: ""; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
@@ -77,15 +68,6 @@
         .card-footer { display: flex; justify-content: space-between; align-items: flex-end; }
         .card-name { font-size: 15px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; }
         .card-brand { font-size: 18px; font-weight: 900; font-style: italic; opacity: 0.9; }
-
-        /* NÚT HƯỚNG DẪN TRÊN THẺ */
-        .card-info-btn {
-            position: absolute; top: 25px; right: 25px; width: 28px; height: 28px; background: rgba(255, 255, 255, 0.2);
-            border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 15px;
-            font-weight: bold; color: white; cursor: pointer; backdrop-filter: blur(5px); transition: 0.3s;
-            z-index: 10; border: 1px solid rgba(255,255,255,0.3);
-        }
-        .card-info-btn:hover { background: rgba(255, 255, 255, 0.4); transform: scale(1.1); }
 
         .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
         .action-box { background: white; border: 1px solid #eef2f5; border-radius: 16px; padding: 15px 10px; text-align: center; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
@@ -166,35 +148,7 @@
 
     <div class="app-container" id="main-app-container">
         
-        <div id="install-screen" class="screen hidden" style="justify-content: center;">
-            <div style="text-align: center; margin-bottom: 25px;">
-                <h1 style="color: #007bff; font-style: italic; font-weight: 900; letter-spacing: 2px; margin: 0; font-size: 32px;">DPIBANK</h1>
-                <p style="color: #666; font-size: 15px; margin-top: 5px; font-weight: bold;">Phiên Bản Ứng Dụng</p>
-            </div>
-            
-            <div style="background: #fff3cd; padding: 25px 20px; border-radius: 16px; border: 2px dashed #ffeeba; text-align: left; box-shadow: 0 4px 15px rgba(255, 193, 7, 0.1);">
-                <h3 style="color: #856404; margin-top: 0; text-align: center; font-size: 18px;">⚠️ BẮT BUỘC CÀI ĐẶT</h3>
-                <p style="font-size: 14.5px; color: #666; line-height: 1.6; text-align: center; margin-bottom: 20px;">
-                    Để đảm bảo bảo mật và giao dịch mượt mà, hệ thống chỉ cho phép đăng nhập từ App trên màn hình chính.
-                </p>
-                
-                <div style="font-size: 14px; color: #444; line-height: 1.7;">
-                    <strong style="color: #007bff; display: block; margin-bottom: 5px;">🍏 Dành cho iPhone/iPad (Safari):</strong>
-                    1. Chạm vào nút <b>Chia sẻ</b> <span style="font-size: 18px;">⍗</span> ở dưới cùng.<br>
-                    2. Chọn <b>Thêm vào MH chính</b> (Add to Home Screen).<br><br>
-                    
-                    <strong style="color: #28a745; display: block; margin-bottom: 5px;">🤖 Dành cho Android (Chrome):</strong>
-                    1. Chạm vào nút <b>⋮</b> (3 chấm) ở góc trên phải.<br>
-                    2. Chọn <b>Thêm vào màn hình chính</b> (Add to Home Screen).
-                </div>
-            </div>
-            
-            <p style="text-align: center; font-size: 13px; color: #888; margin-top: 30px; font-style: italic;">
-                Sau khi thêm thành công, hãy thoát trình duyệt và mở DPIBANK từ màn hình chính của điện thoại để đăng nhập!
-            </p>
-        </div>
-
-        <div id="login-screen" class="screen hidden">
+        <div id="login-screen" class="screen">
             <div style="text-align: center; margin-bottom: 30px; margin-top: 20px;">
                 <h1 style="color: #007bff; font-style: italic; font-weight: 900; letter-spacing: 2px; margin: 0;">DPIBANK</h1>
                 <p style="color: #666; font-size: 14px; margin-top: 5px;">Ngân hàng số THPT Số 1 Đức Phổ</p>
@@ -270,8 +224,6 @@
             </div>
             
             <div class="credit-card">
-                <div class="card-info-btn" onclick="hienHuongDanNapTien()">?</div>
-
                 <div class="card-chip"></div>
                 <div class="card-balance-label">Số dư khả dụng</div>
                 <div class="card-balance" id="card-balance">0 VNĐ</div>
@@ -389,19 +341,6 @@
 
     <script>
         // ==========================================
-        // KHỞI TẠO SERVICE WORKER CHO PWA
-        // ==========================================
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('sw.js').then(function(registration) {
-                    console.log('ServiceWorker đăng ký thành công');
-                }, function(err) {
-                    console.log('ServiceWorker đăng ký thất bại: ', err);
-                });
-            });
-        }
-
-        // ==========================================
         // CẤU HÌNH SUPABASE
         // ==========================================
         const URL_SUPABASE = 'https://fiyhdugintgtlwvvartz.supabase.co';
@@ -423,12 +362,8 @@
             }
         }
 
-        function hienHuongDanNapTien() {
-            showPopup('info', 'Hướng dẫn nạp tiền', 'Tiền có thể nạp từ <b>Quầy giao dịch của Trường</b>.\n\nVui lòng gặp Thủ quỹ hoặc Ban quản trị DPIBANK để thực hiện nạp tiền mặt vào thẻ số.');
-        }
-
         // ==========================================
-        // HỆ THỐNG BAN & KICK NGAY LẬP TỨC
+        // [CỐT LÕI MỚI] HỆ THỐNG BAN & KICK NGAY LẬP TỨC
         // ==========================================
         let currentDeviceId = localStorage.getItem('dpibank_device_id');
         if (!currentDeviceId) {
@@ -465,25 +400,13 @@
                 if (data) thucThiLenhCam();
             } catch (err) { }
         }
+        // Gọi hàm quét thiết bị ngay lập tức khi load trang
+        checkDeviceBan();
 
         // ==========================================
-        // QUY TRÌNH KHỞI ĐỘNG (BẮT BUỘC PWA)
+        // AUTO LOGIN (LOCALSTORAGE)
         // ==========================================
-        function kiemTraStandalone() {
-            // Trả về true nếu đang chạy dưới dạng App màn hình chính
-            return (window.matchMedia('(display-mode: standalone)').matches) || (window.navigator.standalone === true);
-        }
-
-        async function khoiDongUngDung() {
-            await checkDeviceBan(); // Quét ban đầu tiên
-
-            // NẾU LÀ TRÌNH DUYỆT WEB -> BẮT CÀI ĐẶT
-            if (!kiemTraStandalone()) {
-                hienThiManHinh('install-screen');
-                return;
-            }
-
-            // NẾU LÀ APP -> CHẠY QUY TRÌNH ĐĂNG NHẬP
+        async function kiemTraDangNhapTuDong() {
             const savedUserId = localStorage.getItem('dpibank_userId');
             if (savedUserId) {
                 const { data, error } = await db.from('accounts').select('*').eq('id', savedUserId).single();
@@ -492,24 +415,19 @@
                     if (data.is_banned) {
                         localStorage.removeItem('dpibank_userId');
                         hienLoi("Tài khoản của bạn đã bị khóa bởi Quản trị viên!");
-                        hienThiManHinh('login-screen');
                         return;
                     }
+
                     await db.from('accounts').update({ last_device_id: currentDeviceId }).eq('id', data.id);
                     nguoiDungHienTai = data;
                     batDauLangNgheGiaoDich();
                     vaoTrangChu();
                 } else {
                     localStorage.removeItem('dpibank_userId');
-                    hienThiManHinh('login-screen');
                 }
-            } else {
-                hienThiManHinh('login-screen');
             }
         }
-        
-        // GỌI HÀM KHỞI ĐỘNG KHI TẢI TRANG
-        khoiDongUngDung();
+        kiemTraDangNhapTuDong();
 
         // ==========================================
         // UI THÔNG BÁO PUSH (TOAST) & MODAL
@@ -555,7 +473,7 @@
         function hienLoi(msg) { return showPopup('error', 'Lỗi', msg); }
 
         function hienThiManHinh(idScreen) {
-            const screens = ['install-screen', 'login-screen', 'reset-screen', 'update-profile-screen', 'dashboard-screen', 'transfer-screen', 'food-screen', 'class-manage-screen', 'bill-screen', 'history-screen'];
+            const screens = ['login-screen', 'reset-screen', 'update-profile-screen', 'dashboard-screen', 'transfer-screen', 'food-screen', 'class-manage-screen', 'bill-screen', 'history-screen'];
             screens.forEach(s => document.getElementById(s).classList.add('hidden'));
             document.getElementById(idScreen).classList.remove('hidden');
         }
@@ -609,11 +527,13 @@
                         capNhatHienThiSoDu();
                     }
                 })
+                // [KICK REALTIME] Nghe Admin khóa tài khoản của User hiện tại
                 .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'accounts' }, (payload) => {
                     if (nguoiDungHienTai && payload.new.id === nguoiDungHienTai.id) {
                         if (payload.new.is_banned === true) thucThiLenhCam(); 
                     }
                 })
+                // [KICK REALTIME] Nghe Admin chèn Device ID vào sổ đen
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'banned_devices' }, (payload) => {
                     if (payload.new.device_id === currentDeviceId) thucThiLenhCam(); 
                 })
@@ -624,6 +544,7 @@
         // ĐĂNG NHẬP (HAI BƯỚC) & TẠO MỚI TỰ ĐỘNG
         // ==========================================
         async function xuLyDangNhap() {
+            // Lớp bảo vệ số 3: Kiểm tra chặt sổ đen trên database trước khi login
             const { data: isBannedDev } = await db.from('banned_devices').select('*').eq('device_id', currentDeviceId).single();
             if (isBannedDev) {
                 thucThiLenhCam();
@@ -663,7 +584,7 @@
                 } else {
                     const { data: newUser, error: errTao } = await db.from('accounts').insert({
                         phone: phone, name: "Khách", password: "", balance: 0, nhom: "Khối 10", lop: "",
-                        last_device_id: currentDeviceId
+                        last_device_id: currentDeviceId // Lưu Device ID ngay khi tạo
                     }).select().single();
 
                     if (errTao || !newUser) return hienLoi("Hệ thống lỗi, không thể tạo tài khoản mới lúc này!");
