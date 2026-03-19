@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DPIBANK - Ngân Hàng Số THPT Số 1 Đức Phổ</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -280,7 +281,16 @@
                 <label>Số tiền (VNĐ)</label>
                 <input type="number" id="transfer-amount" placeholder="Ví dụ: 20000">
             </div>
-            <button class="btn btn-primary" onclick="xuLyChuyenTien()" style="margin-top: 20px;">Tiếp tục</button>
+            <div class="input-group">
+                <label>Hiệu ứng đính kèm</label>
+                <select id="transfer-effect">
+                    <option value="">🚫 Không gửi kèm hiệu ứng</option>
+                    <option value="[E:CONFETTI]">🎉 Tung Pháo Hoa</option>
+                    <option value="[E:HEART]">💖 Cơn mưa Thả Tim</option>
+                    <option value="[E:FIREWORK]">🎆 Pháo hoa Đêm Giao Thừa</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" onclick="xuLyChuyenTien()" style="margin-top: 10px;">Chuyển Ngay</button>
         </div>
 
         <div id="food-screen" class="screen hidden">
@@ -316,14 +326,21 @@
                 <div id="class-revenue" style="font-size: 32px; font-weight: bold; margin-top: 5px;">0 VNĐ</div>
             </div>
 
-            <h4 style="margin: 0 0 10px 0; color: #555;">Thêm món mới</h4>
+            <h4 style="margin: 0 0 10px 0; color: #555;">Mã Giảm Giá (Voucher)</h4>
+            <div style="display: flex; gap: 8px; margin-bottom: 10px; width: 100%; align-items: stretch;">
+                <input type="text" id="new-voucher-code" placeholder="Mã (VD: FREESHIP)" style="flex: 1.5; min-width: 0; padding: 10px; border: 1px solid #e0e0e0; border-radius: 8px; text-transform: uppercase; font-size: 13px;">
+                <input type="number" id="new-voucher-amount" placeholder="Giảm..." style="flex: 1; min-width: 0; padding: 10px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 13px;">
+                <input type="number" id="new-voucher-qty" placeholder="SL" style="width: 50px; padding: 10px; border: 1px solid #e0e0e0; border-radius: 8px; text-align: center; font-size: 13px;">
+                <button class="btn btn-primary" style="width: auto; margin: 0; padding: 0 15px; border-radius: 8px; flex-shrink: 0;" onclick="themVoucher()">Tạo</button>
+            </div>
+            <div id="manage-voucher-container" class="menu-list" style="max-height: 120px; margin-top: 0; margin-bottom: 20px;"></div>
+
+            <h4 style="margin: 20px 0 10px 0; color: #555; border-top: 1px dashed #ccc; padding-top: 15px;">Thêm món mới</h4>
             <div style="display: flex; gap: 8px; margin-bottom: 20px; width: 100%; align-items: stretch;">
                 <input type="text" id="new-food-name" placeholder="Tên món..." style="flex: 1; min-width: 0; padding: 12px; border: 1px solid #e0e0e0; border-radius: 8px; outline: none;">
                 <input type="number" id="new-food-price" placeholder="Giá..." style="flex: 1; min-width: 0; padding: 12px; border: 1px solid #e0e0e0; border-radius: 8px; outline: none;">
                 <button class="btn btn-success" style="width: auto; margin: 0; padding: 0 15px; border-radius: 8px; flex-shrink: 0; white-space: nowrap;" onclick="themMonLop()">Thêm</button>
             </div>
-
-            <h4 style="margin: 0 0 10px 0; color: #555;">Thực đơn hiện tại</h4>
             <div id="manage-menu-container" class="menu-list" style="max-height: 200px; margin-top: 0;"></div>
 
             <h4 style="margin: 20px 0 10px 0; color: #555; border-top: 1px dashed #ccc; padding-top: 15px;">Lịch sử bán hàng</h4>
@@ -363,12 +380,43 @@
         let isBalanceHidden = false; // Biến lưu trạng thái ẩn số dư toàn cục
 
         // ==========================================
+        // QUẢN LÝ HIỆU ỨNG (ANIMATIONS)
+        // ==========================================
+        function playEffect(type) {
+            if (type === 'CONFETTI') {
+                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, zIndex: 9999 });
+            } else if (type === 'HEART') {
+                const defaults = { spread: 360, ticks: 100, gravity: 0, decay: 0.94, startVelocity: 30, shapes: ['heart'], colors: ['#FFC0CB', '#FF69B4', '#FF1493', '#C71585'], zIndex: 9999 };
+                confetti({ ...defaults, particleCount: 50, scalar: 2 });
+                confetti({ ...defaults, particleCount: 25, scalar: 3 });
+                confetti({ ...defaults, particleCount: 10, scalar: 4 });
+            } else if (type === 'FIREWORK') {
+                const duration = 3 * 1000; const animationEnd = Date.now() + duration; const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 };
+                const interval = setInterval(function() {
+                    const timeLeft = animationEnd - Date.now();
+                    if (timeLeft <= 0) return clearInterval(interval);
+                    const particleCount = 50 * (timeLeft / duration);
+                    confetti(Object.assign({}, defaults, { particleCount, origin: { x: Math.random(), y: Math.random() - 0.2 } }));
+                }, 250);
+            }
+        }
+
+        // Tách hiệu ứng khỏi text để hiển thị nội dung sạch sẽ
+        function parseDescription(desc) {
+            if (!desc) return { clean: '', effect: null };
+            const effectMatch = desc.match(/\[E:(.*?)\]/);
+            return {
+                clean: desc.replace(/\[E:.*?\]/g, '').trim(),
+                effect: effectMatch ? effectMatch[1] : null
+            };
+        }
+
+        // ==========================================
         // 1. TẠO HOẶC LẤY MÃ THIẾT BỊ (DEVICE ID)
         // ==========================================
         function getDeviceId() {
             let deviceId = localStorage.getItem('dpibank_device_id');
             if (!deviceId) {
-                // Tạo mã ngẫu nhiên kiểu DPI-DEV-XYZ123
                 deviceId = 'DPI-DEV-' + Math.random().toString(36).substr(2, 9).toUpperCase();
                 localStorage.setItem('dpibank_device_id', deviceId);
             }
@@ -381,25 +429,18 @@
         async function kiemTraThietBiBiCam() {
             const deviceId = getDeviceId();
             document.getElementById('display-device-id').innerText = `Mã TB: ${deviceId}`;
-            
-            // Tìm xem có tài khoản nào dùng mã thiết bị này mà bị khóa (is_banned = true) không
-            const { data, error } = await db.from('accounts')
-                .select('id')
-                .eq('device_id', deviceId)
-                .eq('is_banned', true);
-                
+            const { data, error } = await db.from('accounts').select('id').eq('device_id', deviceId).eq('is_banned', true);
             if (data && data.length > 0) {
                 hienThiManHinh('banned-screen');
-                return true; // Thiết bị đang bị cấm
+                return true;
             }
-            return false; // Thiết bị an toàn
+            return false;
         }
 
         const formatTien = (tien) => new Intl.NumberFormat('vi-VN').format(tien) + " VNĐ";
         function xoaDau(str) { return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toUpperCase(); }
         function layCauChao() { const gio = new Date().getHours(); return (gio >= 5 && gio < 12) ? "Chào buổi sáng," : (gio >= 12 && gio < 18) ? "Chào buổi chiều," : "Chào buổi tối,"; }
 
-        // Hàm hỗ trợ tự động che/hiện số dư theo cài đặt
         function capNhatHienThiSoDu() {
             const el = document.getElementById('card-balance');
             if(el && nguoiDungHienTai) {
@@ -411,23 +452,18 @@
         // AUTO LOGIN
         // ==========================================
         async function kiemTraDangNhapTuDong() {
-            // CHẶN TỪ CỬA NẾU THIẾT BỊ BỊ CẤM
             if (await kiemTraThietBiBiCam()) return;
 
             const savedUserId = localStorage.getItem('dpibank_userId');
             if (savedUserId) {
                 const { data, error } = await db.from('accounts').select('*').eq('id', savedUserId).single();
-                
                 if (data && !error) {
                     if (data.is_banned) {
                         hienThiManHinh('banned-screen');
                         return;
                     }
                     nguoiDungHienTai = data;
-                    
-                    // Cập nhật lại mã thiết bị lên DB phòng trường hợp đăng nhập thiết bị mới
                     await db.from('accounts').update({ device_id: getDeviceId() }).eq('id', nguoiDungHienTai.id);
-                    
                     batDauLangNgheGiaoDich();
                     vaoTrangChu();
                 } else {
@@ -435,7 +471,6 @@
                 }
             }
         }
-        
         kiemTraDangNhapTuDong();
 
         // ==========================================
@@ -445,7 +480,6 @@
             const wrapper = document.getElementById('toast-wrapper');
             const toast = document.createElement('div');
             toast.className = `toast ${isClassFund ? 'class-fund' : ''}`;
-            
             const icon = isClassFund ? '🎉' : '💸';
             toast.innerHTML = `
                 <div class="toast-icon">${icon}</div>
@@ -458,9 +492,6 @@
             setTimeout(() => { if (wrapper.contains(toast)) wrapper.removeChild(toast); }, 5000);
         }
 
-        // ==========================================
-        // HỆ THỐNG POPUP TÙY CHỈNH
-        // ==========================================
         function showPopup(type, title, message, isConfirm = false) {
             return new Promise((resolve) => {
                 const modal = document.getElementById('custom-modal');
@@ -497,9 +528,6 @@
             document.getElementById(idScreen).classList.remove('hidden');
         }
 
-        // ==========================================
-        // KIỂM TRA TRẠNG THÁI CỔNG
-        // ==========================================
         async function kiemTraCong() {
             const { data: sysConfig, error } = await db.from('system_config').select('is_open').eq('id', 1).single();
             if (error || !sysConfig) {
@@ -520,7 +548,6 @@
             if (realtimeChannel) db.removeChannel(realtimeChannel);
 
             realtimeChannel = db.channel('public_changes')
-                // 1. Lắng nghe giao dịch tiền
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'transfers' }, async (payload) => {
                     if (!nguoiDungHienTai) return;
                     
@@ -528,10 +555,16 @@
                     const { data: receiverInfo } = await db.from('accounts').select('name').eq('id', gd.receiver_id).single();
                     if (!receiverInfo) return;
 
+                    // KIỂM TRA & KÍCH HOẠT HIỆU ỨNG
+                    const parsedDesc = parseDescription(gd.description);
+
                     if (gd.receiver_id === nguoiDungHienTai.id) {
                         nguoiDungHienTai.balance += gd.amount;
-                        capNhatHienThiSoDu(); // Tự động hiển thị đúng định dạng
-                        hienThiToast(`Bạn vừa nhận +${formatTien(gd.amount)}`, `Nội dung: ${gd.description || 'Chuyển tiền'}`);
+                        capNhatHienThiSoDu(); 
+                        
+                        if (parsedDesc.effect) playEffect(parsedDesc.effect); // Nổ hiệu ứng nếu có
+                        
+                        hienThiToast(`Bạn vừa nhận +${formatTien(gd.amount)}`, `Nội dung: ${parsedDesc.clean || 'Chuyển tiền'}`);
                         return;
                     }
 
@@ -539,21 +572,19 @@
                         const { data: senderInfo } = await db.from('accounts').select('name').eq('id', gd.sender_id).single();
                         const tenNguoiMua = senderInfo ? senderInfo.name : 'Khách';
                         
-                        hienThiToast(`Lớp bạn vừa bán được hàng!`, `+${formatTien(gd.amount)} từ ${tenNguoiMua}<br>🛒 ${gd.description}`, true);
+                        hienThiToast(`Lớp bạn vừa bán được hàng!`, `+${formatTien(gd.amount)} từ ${tenNguoiMua}<br>🛒 ${parsedDesc.clean}`, true);
 
                         if (!document.getElementById('class-manage-screen').classList.contains('hidden')) {
                             tinhDoanhThuLop(); loadLichSuBanHang();
                         }
                     }
                 })
-                // 2. Lắng nghe tín hiệu Ẩn Số Dư từ Admin Panel
                 .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'system_config' }, (payload) => {
                     if (payload.new.id === 1 && payload.new.is_balance_hidden !== undefined) {
                         isBalanceHidden = payload.new.is_balance_hidden;
-                        capNhatHienThiSoDu(); // Che hoặc hiện số dư ngay lập tức
+                        capNhatHienThiSoDu();
                     }
                 })
-                // 3. LẮNG NGHE LỆNH CẤM/MỞ CẤM (Ban/Unban) TỪ ADMIN
                 .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'accounts', filter: `id=eq.${nguoiDungHienTai.id}` }, (payload) => {
                     const updatedAcc = payload.new;
                     nguoiDungHienTai = updatedAcc;
@@ -563,7 +594,6 @@
                         hienThiManHinh('banned-screen');
                         showPopup('error', 'CẢNH BÁO NGHIÊM TRỌNG', 'Tài khoản & Thiết bị của bạn vừa bị Quản trị viên cấm sử dụng hệ thống!');
                     } else {
-                        // Nếu đang bị cấm mà được Admin mở khóa
                         if (!document.getElementById('banned-screen').classList.contains('hidden')) {
                             vaoTrangChu();
                             showPopup('success', 'THÔNG BÁO', 'Tài khoản đã được gỡ lệnh cấm. Bạn có thể sử dụng bình thường.');
@@ -577,7 +607,6 @@
         // ĐĂNG NHẬP (HAI BƯỚC) & TẠO MỚI TỰ ĐỘNG
         // ==========================================
         async function xuLyDangNhap() {
-            // CHẶN TẠO TÀI KHOẢN HAY ĐĂNG NHẬP NẾU THIẾT BỊ BỊ CẤM
             if (await kiemTraThietBiBiCam()) return;
 
             const phone = document.getElementById('login-phone').value.trim();
@@ -588,15 +617,10 @@
             
             if (!phone) return hienLoi("Vui lòng nhập số điện thoại!");
 
-            // BƯỚC 1: KIỂM TRA SỐ ĐIỆN THOẠI
             if (passGroup.classList.contains('hidden')) {
-                btnAction.innerText = "Đang kiểm tra...";
-                btnAction.disabled = true;
-
+                btnAction.innerText = "Đang kiểm tra..."; btnAction.disabled = true;
                 const { data: accounts, error } = await db.from('accounts').select('*').eq('phone', phone);
-                
-                btnAction.innerText = "Tiếp Tục";
-                btnAction.disabled = false;
+                btnAction.innerText = "Tiếp Tục"; btnAction.disabled = false;
 
                 if (error) return hienLoi("Lỗi kết nối cơ sở dữ liệu!");
 
@@ -617,55 +641,31 @@
                 }
                 else {
                     const { data: newUser, error: errTao } = await db.from('accounts').insert({
-                        phone: phone,
-                        name: "Khách",
-                        password: "",
-                        balance: 0,
-                        nhom: "Khối 10",
-                        lop: "",
-                        device_id: getDeviceId() // Gắn mã thiết bị ngay lúc tạo
+                        phone: phone, name: "Khách", password: "", balance: 0, nhom: "Khối 10", lop: "",
+                        device_id: getDeviceId()
                     }).select().single();
 
                     if (errTao || !newUser) return hienLoi("Hệ thống lỗi, không thể tạo tài khoản mới lúc này!");
 
                     nguoiDungHienTai = newUser;
-                    batDauLangNgheGiaoDich();
-                    hienThiManHinh('reset-screen');
+                    batDauLangNgheGiaoDich(); hienThiManHinh('reset-screen');
                 }
-            }
-            // BƯỚC 2: KIỂM TRA MẬT KHẨU VÀ BANNED
-            else {
+            } else {
                 const pass = passInput.value.trim();
                 if (!pass) return hienLoi("Vui lòng nhập mật khẩu để đăng nhập!");
 
-                btnAction.innerText = "Đang đăng nhập...";
-                btnAction.disabled = true;
-
+                btnAction.innerText = "Đang đăng nhập..."; btnAction.disabled = true;
                 const { data: account, error } = await db.from('accounts').select('*').eq('phone', phone).single();
-                
-                btnAction.innerText = "Đăng Nhập";
-                btnAction.disabled = false;
+                btnAction.innerText = "Đăng Nhập"; btnAction.disabled = false;
 
                 if (error || !account) return hienLoi("Lỗi hệ thống, vui lòng thử lại!");
-
                 if (account.password !== pass) return hienLoi("Mật khẩu không chính xác!");
+                if (account.is_banned) { hienThiManHinh('banned-screen'); return; }
                 
-                if (account.is_banned) {
-                    hienThiManHinh('banned-screen');
-                    return;
-                }
-                
-                // ĐĂNG NHẬP THÀNH CÔNG
                 nguoiDungHienTai = account;
-                localStorage.setItem('dpibank_userId', account.id); // LƯU AUTO LOGIN
-                
-                // Đồng bộ mã thiết bị hiện tại lên DB
+                localStorage.setItem('dpibank_userId', account.id);
                 await db.from('accounts').update({ device_id: getDeviceId() }).eq('id', nguoiDungHienTai.id);
-                
-                batDauLangNgheGiaoDich();
-                vaoTrangChu();
-                
-                passInput.value = '';
+                batDauLangNgheGiaoDich(); vaoTrangChu(); passInput.value = '';
             }
         }
 
@@ -686,7 +686,6 @@
             const { error } = await db.from('accounts').update({ password: newPass }).eq('id', nguoiDungHienTai.id);
             if (error) return hienLoi("Hệ thống lỗi, không thể cập nhật mật khẩu lúc này!");
             
-            // PHÂN LOẠI TÀI KHOẢN ĐỂ CHUYỂN HƯỚNG
             if (nguoiDungHienTai.name.includes("Khách")) {
                 hienThiManHinh('update-profile-screen');
             } else {
@@ -696,17 +695,11 @@
             }
         }
 
-        // ==========================================
-        // CẬP NHẬT THÔNG TIN HỒ SƠ (CHO TÀI KHOẢN MỚI)
-        // ==========================================
         function kiemTraHienThiLop() {
             const nhom = document.getElementById('profile-group').value;
             const classGroup = document.getElementById('profile-class-group');
-            const classInput = document.getElementById('profile-class');
-            
             if (nhom === "Giáo viên" || nhom === "Người ngoài") {
-                classGroup.classList.add('hidden');
-                classInput.value = '';
+                classGroup.classList.add('hidden'); document.getElementById('profile-class').value = '';
             } else {
                 classGroup.classList.remove('hidden');
             }
@@ -720,25 +713,15 @@
             const lop = document.getElementById('profile-class').value.trim().toUpperCase();
 
             if (!name) return hienLoi("Vui lòng nhập Họ và Tên!");
-            
             if (nhom !== "Giáo viên" && nhom !== "Người ngoài" && !lop) {
                 return hienLoi("Vui lòng nhập Tên Lớp của bạn!");
             }
 
-            const { error } = await db.from('accounts').update({
-                name: name,
-                nhom: nhom,
-                lop: lop
-            }).eq('id', nguoiDungHienTai.id);
-
+            const { error } = await db.from('accounts').update({ name: name, nhom: nhom, lop: lop }).eq('id', nguoiDungHienTai.id);
             if (error) return hienLoi("Không thể lưu thông tin lúc này!");
 
-            // Cập nhật biến cục bộ và lưu phiên
-            nguoiDungHienTai.name = name;
-            nguoiDungHienTai.nhom = nhom;
-            nguoiDungHienTai.lop = lop;
-            localStorage.setItem('dpibank_userId', nguoiDungHienTai.id); // LƯU AUTO LOGIN
-
+            nguoiDungHienTai.name = name; nguoiDungHienTai.nhom = nhom; nguoiDungHienTai.lop = lop;
+            localStorage.setItem('dpibank_userId', nguoiDungHienTai.id);
             await showPopup('success', 'Mở thẻ thành công', `Chào mừng ${name} đến với DPIBANK!`);
             vaoTrangChu();
         }
@@ -747,46 +730,38 @@
             const { data } = await db.from('accounts').select('*').eq('id', nguoiDungHienTai.id).single();
             if(data) nguoiDungHienTai = data;
 
-            // Đồng bộ trạng thái ẩn số dư lúc vừa vào trang
             const { data: sysConf } = await db.from('system_config').select('is_balance_hidden').eq('id', 1).single();
             if (sysConf && sysConf.is_balance_hidden !== undefined) isBalanceHidden = sysConf.is_balance_hidden;
 
             document.getElementById('greeting-time').innerText = layCauChao();
             document.getElementById('greeting-name').innerText = nguoiDungHienTai.name;
             document.getElementById('card-name').innerText = xoaDau(nguoiDungHienTai.name);
-            
-            capNhatHienThiSoDu(); // Gọi hàm cập nhật hiển thị số dư
-            
+            capNhatHienThiSoDu(); 
             document.getElementById('btn-manage-class').style.display = (nguoiDungHienTai.lop && nguoiDungHienTai.is_lop_truong) ? 'block' : 'none';
             hienThiManHinh('dashboard-screen');
         }
 
         async function dangXuat() {
-            // Không hiện xác nhận nếu bấm nút đăng xuất từ trang Banned
             if (document.getElementById('banned-screen').classList.contains('hidden')) {
                 const thoat = await showPopup('warning', 'Đăng xuất', 'Bạn có chắc chắn muốn thoát tài khoản DPIBANK?', true);
                 if (!thoat) return;
             }
-            
             if (realtimeChannel) db.removeChannel(realtimeChannel);
             nguoiDungHienTai = null;
-            
-            // XÓA DỮ LIỆU AUTO LOGIN
             localStorage.removeItem('dpibank_userId');
-            
             document.querySelectorAll('input').forEach(input => input.value = '');
-            quayLaiNhapSdt();
-            hienThiManHinh('login-screen');
+            quayLaiNhapSdt(); hienThiManHinh('login-screen');
         }
 
         // ==========================================
-        // CHUYỂN TIỀN
+        // CHUYỂN TIỀN & HIỆU ỨNG
         // ==========================================
         async function xuLyChuyenTien() {
             if (!(await kiemTraCong())) return;
 
             const phoneNhan = document.getElementById('transfer-phone').value.trim();
             const soTien = parseInt(document.getElementById('transfer-amount').value.trim());
+            const effectChoice = document.getElementById('transfer-effect').value;
 
             if (!phoneNhan || isNaN(soTien) || soTien <= 0) return hienLoi("Dữ liệu không hợp lệ. Vui lòng kiểm tra lại!");
             if (phoneNhan === nguoiDungHienTai.phone) return hienLoi("Bạn không thể tự chuyển tiền cho chính mình!");
@@ -803,20 +778,25 @@
             if (!xacNhan) return;
 
             if (!(await kiemTraCong())) return;
-            const note = `Chuyển tiền cho ${ngNhan.name}`;
+            
+            // Kèm mã hiệu ứng vào note để kích hoạt Realtime cho người nhận
+            const note = `Chuyển tiền cho ${ngNhan.name} ${effectChoice}`.trim();
 
             await db.from('accounts').update({ balance: nguoiDungHienTai.balance - soTien }).eq('id', nguoiDungHienTai.id);
             await db.from('accounts').update({ balance: ngNhan.balance + soTien }).eq('id', ngNhan.id);
             await db.from('transfers').insert({ sender_id: nguoiDungHienTai.id, receiver_id: ngNhan.id, amount: soTien, description: note });
 
             nguoiDungHienTai.balance -= soTien;
-            capNhatHienThiSoDu(); // Tự động hiển thị đúng định dạng
+            capNhatHienThiSoDu(); 
 
-            hienThiBill(ngNhan.name, soTien, note);
+            // Chạy hiệu ứng cho người gửi xem luôn
+            if (effectChoice) playEffect(parseDescription(effectChoice).effect);
+
+            hienThiBill(ngNhan.name, soTien, "Chuyển tiền cho " + ngNhan.name);
         }
 
         // ==========================================
-        // MUA ĐỒ ĂN
+        // GIAN HÀNG & MÃ GIẢM GIÁ
         // ==========================================
         async function timMenu() {
             const tenLop = document.getElementById('food-class').value.trim().toUpperCase();
@@ -835,7 +815,15 @@
                 return;
             }
 
-            menuContainer.innerHTML = menu.map(mon => {
+            // Giao diện nhập Voucher ở đầu Menu
+            let htmlStr = `
+                <div style="background: #fff8e1; padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px dashed #ffc107;">
+                    <label style="font-size: 12px; font-weight: bold; color: #d39e00; display:block; margin-bottom: 5px;">🎉 Dùng Voucher Lớp ${tenLop}</label>
+                    <input type="text" id="buyer-voucher-code" placeholder="Nhập mã giảm giá..." style="width: 100%; padding: 10px; border: 1px solid #ffe082; border-radius: 6px; text-transform: uppercase;">
+                </div>
+            `;
+
+            htmlStr += menu.map(mon => {
                 const isHet = mon.het_hang === true;
                 const classHetHang = isHet ? 'item-hethang' : '';
                 const badgeHtml = isHet ? '<span class="badge-hethang">Đã hết</span>' : '';
@@ -852,6 +840,8 @@
                     </div>
                 `;
             }).join('');
+            
+            menuContainer.innerHTML = htmlStr;
         }
 
         async function xuLyMuaMon(tenLop, tenMon, giaTien, inputId) {
@@ -864,10 +854,27 @@
             const soLuong = parseInt(document.getElementById(inputId).value);
             if (isNaN(soLuong) || soLuong < 1) return hienLoi("Số lượng không hợp lệ!");
 
-            const tongTien = giaTien * soLuong;
+            // XỬ LÝ VOUCHER
+            const voucherCode = document.getElementById('buyer-voucher-code').value.trim().toUpperCase();
+            let giamGia = 0;
+            let voucherId = null;
+            let soLuongVoucherMoi = 0;
+
+            if (voucherCode) {
+                const {data: vData} = await db.from('vouchers').select('*').eq('lop', tenLop).eq('ma_giam_gia', voucherCode).single();
+                if(!vData || vData.so_luong <= 0) return hienLoi("Mã giảm giá không hợp lệ hoặc đã hết lượt sử dụng!");
+                giamGia = vData.giam_tien;
+                voucherId = vData.id;
+                soLuongVoucherMoi = vData.so_luong - 1;
+            }
+
+            let tongTien = (giaTien * soLuong) - giamGia;
+            if (tongTien < 0) tongTien = 0;
+
             if (tongTien > nguoiDungHienTai.balance) return hienLoi("Số dư khả dụng không đủ!");
             
-            const xacNhan = await showPopup('warning', 'Xác nhận thanh toán', `Gian hàng: Lớp ${tenLop}\nMón hàng: ${soLuong}x ${tenMon}\nTổng tiền: ${formatTien(tongTien)}`, true);
+            const txtVoucher = giamGia > 0 ? `\n🎁 Mã giảm giá: -${formatTien(giamGia)}` : '';
+            const xacNhan = await showPopup('warning', 'Xác nhận thanh toán', `Gian hàng: Lớp ${tenLop}\nMón hàng: ${soLuong}x ${tenMon}${txtVoucher}\nTổng thanh toán: ${formatTien(tongTien)}`, true);
             if (!xacNhan) return;
             if (!(await kiemTraCong())) return;
 
@@ -877,22 +884,25 @@
                 let nhomHieuChinh = tenLop.startsWith('10') ? 'Khối 10' : (tenLop.startsWith('11') ? 'Khối 11' : 'Khối 12');
                 const { data: taoMoi, error: errTao } = await db.from('accounts').insert({
                     name: `Quỹ Lớp ${tenLop}`, phone: `QUY${tenLop}`, password: Math.random().toString(36), balance: 0, nhom: nhomHieuChinh, lop: tenLop,
-                    device_id: null // Quỹ lớp không cần device_id
+                    device_id: null
                 }).select().single();
                 if (errTao || !taoMoi) return hienLoi(`Lỗi! Không thể khởi tạo Quỹ lớp ${tenLop}.`);
                 accQuyLop = taoMoi;
             }
             
-            const note = `Mua ${soLuong}x ${tenMon}`;
+            // Trừ lượt dùng Voucher
+            if (voucherId) await db.from('vouchers').update({so_luong: soLuongVoucherMoi}).eq('id', voucherId);
+            
+            const noteClean = `Mua ${soLuong}x ${tenMon}${voucherCode ? ` [KM: ${voucherCode}]` : ''}`;
 
             await db.from('accounts').update({ balance: nguoiDungHienTai.balance - tongTien }).eq('id', nguoiDungHienTai.id);
             await db.from('accounts').update({ balance: accQuyLop.balance + tongTien }).eq('id', accQuyLop.id);
-            await db.from('transfers').insert({ sender_id: nguoiDungHienTai.id, receiver_id: accQuyLop.id, amount: tongTien, description: note });
+            await db.from('transfers').insert({ sender_id: nguoiDungHienTai.id, receiver_id: accQuyLop.id, amount: tongTien, description: noteClean });
 
             nguoiDungHienTai.balance -= tongTien;
-            capNhatHienThiSoDu(); // Tự động hiển thị đúng định dạng
+            capNhatHienThiSoDu();
 
-            hienThiBill(accQuyLop.name, tongTien, note);
+            hienThiBill(accQuyLop.name, tongTien, noteClean);
         }
 
         // ==========================================
@@ -923,7 +933,10 @@
                 const lopDoiTac = doiTacInfo?.lop ? ` - ${doiTacInfo.lop}` : '';
                 const tieuDe = isGui ? `Chuyển đến` : `Nhận từ`;
                 const thoiGian = new Date(t.created_at).toLocaleString('vi-VN', {hour: '2-digit', minute:'2-digit', day: '2-digit', month: '2-digit', year: 'numeric'});
-                const ghiChu = t.description ? `<br><span style="color:#555; background: #f1f3f5; padding: 4px 8px; border-radius: 4px; display: inline-block; margin-top: 5px; font-size: 12px;">📝 ${t.description}</span>` : '';
+                
+                // Lọc bỏ mã hiệu ứng để hiển thị sạch sẽ
+                const parsedNote = parseDescription(t.description);
+                const ghiChu = parsedNote.clean ? `<br><span style="color:#555; background: #f1f3f5; padding: 4px 8px; border-radius: 4px; display: inline-block; margin-top: 5px; font-size: 12px;">📝 ${parsedNote.clean}</span>` : '';
 
                 return `
                     <div class="menu-item" style="flex-direction: column; align-items: flex-start; gap: 8px; padding: 15px;">
@@ -939,13 +952,14 @@
         }
 
         // ==========================================
-        // QUẢN LÝ LỚP VÀ HOÀN TIỀN
+        // QUẢN LÝ LỚP & HOÀN TIỀN
         // ==========================================
         async function vaoQuanLyLop() {
             if (!nguoiDungHienTai.is_lop_truong) return hienLoi("⛔ CẢNH BÁO: Chỉ Lớp trưởng mới có quyền truy cập!");
             hienThiManHinh('class-manage-screen');
             document.getElementById('manage-class-name').innerText = nguoiDungHienTai.lop;
             tinhDoanhThuLop();
+            loadVouchers();
             loadMenuQuanLy();
             loadLichSuBanHang();
         }
@@ -972,12 +986,13 @@
                 const lopMua = nguoiMua?.lop ? `(${nguoiMua.lop})` : '';
 
                 // KIỂM TRA ĐÃ HOÀN TIỀN CHƯA VÀ TẠO NÚT
-                const daHoanTien = t.description.includes('[ĐÃ HOÀN TIỀN]');
-                const txtGhiChu = t.description.replace(' [ĐÃ HOÀN TIỀN]', ''); 
+                const parsedNote = parseDescription(t.description);
+                const daHoanTien = parsedNote.clean.includes('[ĐÃ HOÀN TIỀN]');
+                const txtGhiChu = parsedNote.clean.replace(' [ĐÃ HOÀN TIỀN]', ''); 
                 
                 const btnHoanTien = daHoanTien 
                     ? `<button style="background: #e9ecef; color: #6c757d; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: not-allowed;" disabled>Đã hoàn tiền</button>`
-                    : `<button style="background: #ffc107; color: #333; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" onclick="xuLyHoanTien('${t.id}', '${t.sender_id}', ${t.amount}, '${t.description.replace(/'/g, "\\'")}')">↩ Hoàn tiền</button>`;
+                    : `<button style="background: #ffc107; color: #333; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" onclick="xuLyHoanTien('${t.id}', '${t.sender_id}', ${t.amount}, '${parsedNote.clean.replace(/'/g, "\\'")}')">↩ Hoàn tiền</button>`;
 
                 return `
                     <div class="menu-item" style="padding: 12px; flex-direction: column; align-items: flex-start; gap: 6px;">
@@ -1042,6 +1057,48 @@
             }
         }
 
+        // ==========================================
+        // QUẢN LÝ VOUCHER (LỚP TRƯỞNG)
+        // ==========================================
+        async function themVoucher() {
+            if (!nguoiDungHienTai.is_lop_truong) return hienLoi("Chỉ lớp trưởng mới có quyền!");
+            const code = document.getElementById('new-voucher-code').value.trim().toUpperCase();
+            const amount = parseInt(document.getElementById('new-voucher-amount').value);
+            const qty = parseInt(document.getElementById('new-voucher-qty').value);
+            
+            if(!code || isNaN(amount) || amount <= 0 || isNaN(qty) || qty <= 0) return hienLoi("Thông tin mã giảm giá không hợp lệ!");
+
+            const {error} = await db.from('vouchers').insert({ lop: nguoiDungHienTai.lop, ma_giam_gia: code, giam_tien: amount, so_luong: qty });
+            if(error) return hienLoi("Lỗi! Có thể mã này đã tồn tại hoặc hệ thống gián đoạn.");
+            
+            hienThiToast('Thành công', 'Đã tạo mã giảm giá!');
+            document.getElementById('new-voucher-code').value = ''; document.getElementById('new-voucher-amount').value = ''; document.getElementById('new-voucher-qty').value = '';
+            loadVouchers();
+        }
+
+        async function loadVouchers() {
+            const container = document.getElementById('manage-voucher-container');
+            const {data} = await db.from('vouchers').select('*').eq('lop', nguoiDungHienTai.lop);
+            if(!data || data.length === 0) { container.innerHTML = '<p style="font-size:12px; color:#888; text-align:center;">Chưa có mã giảm giá nào.</p>'; return; }
+            container.innerHTML = data.map(v => `
+                <div class="menu-item" style="padding: 10px; font-size: 13px;">
+                    <div><strong>${v.ma_giam_gia}</strong> <span style="color:#dc3545;">-${formatTien(v.giam_tien)}</span></div>
+                    <div>Còn: <b style="color:#007bff">${v.so_luong}</b> lượt | <button onclick="xoaVoucher(${v.id})" style="border:none; background:none; color:red; cursor:pointer; text-decoration: underline;">Xóa mã</button></div>
+                </div>
+            `).join('');
+        }
+
+        async function xoaVoucher(id) {
+            const xacNhan = await showPopup('warning', 'Xác nhận xóa', 'Bạn có chắc chắn muốn xóa vĩnh viễn mã giảm giá này?', true);
+            if(!xacNhan) return;
+            await db.from('vouchers').delete().eq('id', id);
+            hienThiToast('Thành công', 'Đã xóa mã giảm giá!');
+            loadVouchers();
+        }
+
+        // ==========================================
+        // QUẢN LÝ MÓN ĂN
+        // ==========================================
         async function loadMenuQuanLy() {
             const container = document.getElementById('manage-menu-container');
             container.innerHTML = '<p style="text-align:center; color:#555;">Đang tải thực đơn...</p>';
@@ -1148,7 +1205,7 @@
             document.getElementById('bill-receiver').innerText = nguoiNhan;
             document.getElementById('bill-amount').innerText = `- ${formatTien(soTien)}`;
             const itemRow = document.getElementById('bill-item-row');
-            if (note) { itemRow.style.display = 'flex'; document.getElementById('bill-item').innerText = note; }
+            if (note) { itemRow.style.display = 'flex'; document.getElementById('bill-item').innerText = parseDescription(note).clean; }
             else { itemRow.style.display = 'none'; }
             hienThiManHinh('bill-screen');
         }
