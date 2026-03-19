@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DPIBANK - Ngân Hàng Số THPT Số 1 Đức Phổ</title>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -283,12 +283,17 @@
             </div>
             <div class="input-group">
                 <label>Hiệu ứng đính kèm</label>
-                <select id="transfer-effect">
+                <select id="transfer-effect" onchange="toggleCustomEffectInput()">
                     <option value="">🚫 Không gửi kèm hiệu ứng</option>
                     <option value="[E:CONFETTI]">🎉 Tung Pháo Hoa</option>
                     <option value="[E:HEART]">💖 Cơn mưa Thả Tim</option>
                     <option value="[E:FIREWORK]">🎆 Pháo hoa Đêm Giao Thừa</option>
+                    <option value="[E:CUSTOM]">✍️ Thả Chữ / Tên Tùy Chỉnh</option>
                 </select>
+            </div>
+            <div class="input-group hidden" id="custom-effect-group">
+                <label>Nhập chữ muốn thả (Tối đa 6 ký tự)</label>
+                <input type="text" id="custom-effect-text" maxlength="6" placeholder="VD: LOUIS, LOVE..." style="text-transform: uppercase;">
             </div>
             <button class="btn btn-primary" onclick="xuLyChuyenTien()" style="margin-top: 10px;">Chuyển Ngay</button>
         </div>
@@ -380,9 +385,17 @@
         let isBalanceHidden = false; // Biến lưu trạng thái ẩn số dư toàn cục
 
         // ==========================================
-        // QUẢN LÝ HIỆU ỨNG (ANIMATIONS)
+        // QUẢN LÝ HIỆU ỨNG (ANIMATIONS) & TÙY CHỈNH
         // ==========================================
+        function toggleCustomEffectInput() {
+            const effect = document.getElementById('transfer-effect').value;
+            const group = document.getElementById('custom-effect-group');
+            if (effect === '[E:CUSTOM]') group.classList.remove('hidden');
+            else group.classList.add('hidden');
+        }
+
         function playEffect(type) {
+            if (!type) return;
             if (type === 'CONFETTI') {
                 confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, zIndex: 9999 });
             } else if (type === 'HEART') {
@@ -398,6 +411,14 @@
                     const particleCount = 50 * (timeLeft / duration);
                     confetti(Object.assign({}, defaults, { particleCount, origin: { x: Math.random(), y: Math.random() - 0.2 } }));
                 }, 250);
+            } else if (type.startsWith('CUSTOM:')) {
+                // Xử lý hiệu ứng Thả Chữ Tùy chỉnh
+                const text = type.split(':')[1];
+                const customShape = confetti.shapeFromText({ text: text, scalar: 3 });
+                const defaults = { spread: 360, ticks: 100, gravity: 0.1, decay: 0.94, startVelocity: 30, shapes: [customShape], zIndex: 9999 };
+                confetti({ ...defaults, particleCount: 30 });
+                setTimeout(() => confetti({ ...defaults, particleCount: 20 }), 200);
+                setTimeout(() => confetti({ ...defaults, particleCount: 10 }), 400);
             }
         }
 
@@ -761,7 +782,14 @@
 
             const phoneNhan = document.getElementById('transfer-phone').value.trim();
             const soTien = parseInt(document.getElementById('transfer-amount').value.trim());
-            const effectChoice = document.getElementById('transfer-effect').value;
+            let effectChoice = document.getElementById('transfer-effect').value;
+
+            // KIỂM TRA NẾU CHỌN HIỆU ỨNG TÙY CHỈNH
+            if (effectChoice === '[E:CUSTOM]') {
+                const customText = document.getElementById('custom-effect-text').value.trim().toUpperCase();
+                if (!customText) return hienLoi("Vui lòng nhập chữ hoặc tên bạn muốn thả hiệu ứng!");
+                effectChoice = `[E:CUSTOM:${customText}]`; // Lưu kèm Text vào nội dung
+            }
 
             if (!phoneNhan || isNaN(soTien) || soTien <= 0) return hienLoi("Dữ liệu không hợp lệ. Vui lòng kiểm tra lại!");
             if (phoneNhan === nguoiDungHienTai.phone) return hienLoi("Bạn không thể tự chuyển tiền cho chính mình!");
@@ -906,7 +934,7 @@
         }
 
         // ==========================================
-        // LỊCH SỬ CÁ NHÂN
+        // LỊCH SỬ CÁ NHÂN & PHÁT LẠI HIỆU ỨNG
         // ==========================================
         async function xemLichSu() {
             hienThiManHinh('history-screen');
@@ -934,9 +962,13 @@
                 const tieuDe = isGui ? `Chuyển đến` : `Nhận từ`;
                 const thoiGian = new Date(t.created_at).toLocaleString('vi-VN', {hour: '2-digit', minute:'2-digit', day: '2-digit', month: '2-digit', year: 'numeric'});
                 
-                // Lọc bỏ mã hiệu ứng để hiển thị sạch sẽ
+                // Lọc bỏ mã hiệu ứng để hiển thị sạch sẽ & Thêm nút Phát lại
                 const parsedNote = parseDescription(t.description);
-                const ghiChu = parsedNote.clean ? `<br><span style="color:#555; background: #f1f3f5; padding: 4px 8px; border-radius: 4px; display: inline-block; margin-top: 5px; font-size: 12px;">📝 ${parsedNote.clean}</span>` : '';
+                let ghiChu = parsedNote.clean ? `<br><span style="color:#555; background: #f1f3f5; padding: 4px 8px; border-radius: 4px; display: inline-block; margin-top: 5px; font-size: 12px;">📝 ${parsedNote.clean}</span>` : '';
+
+                if (parsedNote.effect) {
+                    ghiChu += ` <button onclick="playEffect('${parsedNote.effect}')" style="background: #fff0f5; border: 1px solid #ff69b4; color: #d81b60; padding: 2px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; margin-left: 5px; font-weight: bold;">▶️ Xem Hiệu Ứng</button>`;
+                }
 
                 return `
                     <div class="menu-item" style="flex-direction: column; align-items: flex-start; gap: 8px; padding: 15px;">
