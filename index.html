@@ -7,8 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        
-        /* === BACKGROUND === */
+
         body {
             display: flex; justify-content: center; align-items: center;
             min-height: 100vh; margin: 0; padding: 15px;
@@ -20,7 +19,6 @@
             filter: blur(8px) brightness(0.4); transform: scale(1.1); z-index: -1;
         }
 
-        /* KHUNG APP */
         .app-container {
             background: white; border-radius: 20px;
             box-shadow: 0 15px 50px rgba(0,0,0,0.5);
@@ -28,8 +26,7 @@
             position: relative; overflow: hidden; display: flex; flex-direction: column;
         }
         .screen { padding: 25px; flex: 1; display: flex; flex-direction: column; }
-        
-        /* CÁC THÀNH PHẦN CHUNG */
+
         h2 { color: #333; margin-bottom: 20px; margin-top: 0; text-align: center; }
         .input-group { margin-bottom: 15px; text-align: left; }
         .input-group label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;}
@@ -49,8 +46,7 @@
         .btn-secondary:hover { background: #ffe3e3; }
         
         .hidden { display: none !important; }
-        
-        /* DASHBOARD */
+
         .header-dpibank { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .logo-dpibank { font-size: 22px; font-weight: 900; color: #007bff; letter-spacing: 1px; font-style: italic; }
         .user-greeting { font-size: 14px; color: #666; }
@@ -78,8 +74,6 @@
         .action-box.class-manage { grid-column: span 2; background: #f8f9fa; border-color: #dee2e6; display: none; }
         .action-box.class-manage .action-icon { background: #e2e3e5; color: #495057; }
         .action-box.class-manage:hover { border-color: #adb5bd; }
-        .action-box.admin-manage { grid-column: span 2; background: #fff3cd; border-color: #ffeeba; display: none; }
-        .action-box.admin-manage .action-icon { background: #ffe8a1; color: #856404; }
         .action-title { font-size: 14px; font-weight: bold; color: #444; }
 
         .header-top { display: flex; align-items: center; margin-bottom: 25px; }
@@ -95,11 +89,9 @@
         .btn-buy { background: #eef5ff; border: 1px solid #007bff; color: #007bff; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .btn-buy:hover { background: #007bff; color: white; }
 
-        /* HẾT HÀNG CSS */
         .badge-hethang { background: #dc3545; color: white; font-size: 11px; padding: 2px 6px; border-radius: 4px; margin-left: 8px; vertical-align: middle; font-weight: bold; }
         .item-hethang { opacity: 0.6; pointer-events: none; filter: grayscale(80%); }
 
-        /* MODAL VÀ THÔNG BÁO PUSH (TOAST) */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; pointer-events: none; transition: 0.3s; }
         .modal-overlay.active { opacity: 1; pointer-events: auto; }
         .modal-box { background: white; padding: 25px; border-radius: 16px; width: 85%; max-width: 320px; text-align: center; transform: scale(0.9); transition: 0.3s; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
@@ -123,7 +115,6 @@
         @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-20px); } }
 
-        /* HÓA ĐƠN */
         .bill-wrapper { display: flex; flex-direction: column; align-items: center; text-align: center; margin-top: 20px;}
         .bill-box { background: white; border: 1px solid #eee; padding: 25px; border-radius: 16px; margin-bottom: 30px; width: 100%; box-shadow: 0 10px 25px rgba(0,0,0,0.05); text-align: left; position: relative;}
         .bill-box::before, .bill-box::after { content: ''; position: absolute; width: 20px; height: 20px; background: #eef2f5; border-radius: 50%; top: -10px; }
@@ -264,10 +255,6 @@
                     <div class="action-icon">⚙️</div>
                     <div class="action-title">Quản Lý Lớp</div>
                 </div>
-                <div class="action-box admin-manage" id="btn-manage-admin" onclick="vaoAdminPanel()">
-                    <div class="action-icon">👑</div>
-                    <div class="action-title">Quản Trị Hệ Thống</div>
-                </div>
             </div>
             
             <button class="btn btn-secondary" onclick="dangXuat()">Đăng Xuất</button>
@@ -348,27 +335,6 @@
             <div id="manage-history-container" class="menu-list" style="max-height: 250px; margin-top: 0;"></div>
         </div>
 
-        <div id="admin-screen" class="screen hidden">
-            <div class="header-top">
-                <button class="back-btn" onclick="vaoTrangChu()">❮</button>
-                <h2 style="margin: 0;">Admin Panel</h2>
-            </div>
-            
-            <p style="font-size: 14px; color: #666; margin-bottom: 20px;">Trình điều khiển và kiểm soát rủi ro toàn hệ thống DPIBANK.</p>
-            
-            <button id="btn-toggle-gateway" class="btn btn-warning" onclick="toggleGateway()" style="margin-bottom: 25px;">Đang tải...</button>
-            
-            <h4 style="margin: 0 0 10px 0; color: #555;">Tìm kiếm & Quản lý User</h4>
-            <div class="input-group" style="display:flex; gap:10px;">
-                <input type="tel" id="admin-search-phone" placeholder="Nhập SĐT người dùng...">
-                <button class="btn btn-primary" style="width:auto; margin:0;" onclick="adminTimUser()">Tìm</button>
-            </div>
-            <div id="admin-user-result" style="margin-bottom: 25px;"></div>
-
-            <h4 style="margin: 0 0 10px 0; color: #555; border-top: 1px dashed #ccc; padding-top: 15px;">Giao dịch gần đây toàn hệ thống</h4>
-            <div id="admin-history-container" class="menu-list" style="max-height: 300px;"></div>
-        </div>
-
         <div id="bill-screen" class="screen hidden" style="background: #f8f9fa;">
             <div class="bill-wrapper">
                 <div class="success-icon">✅</div>
@@ -399,7 +365,7 @@
         
         let nguoiDungHienTai = null;
         let realtimeChannel = null;
-        let isBalanceHidden = false; // Biến lưu trạng thái ẩn số dư toàn cục
+        let isBalanceHidden = false; 
 
         // ==========================================
         // 1. TẠO HOẶC LẤY MÃ THIẾT BỊ (DEVICE ID)
@@ -513,7 +479,7 @@
         function hienLoi(msg) { return showPopup('error', 'Lỗi', msg); }
 
         function hienThiManHinh(idScreen) {
-            const screens = ['login-screen', 'reset-screen', 'update-profile-screen', 'dashboard-screen', 'transfer-screen', 'food-screen', 'class-manage-screen', 'bill-screen', 'history-screen', 'banned-screen', 'admin-screen'];
+            const screens = ['login-screen', 'reset-screen', 'update-profile-screen', 'dashboard-screen', 'transfer-screen', 'food-screen', 'class-manage-screen', 'bill-screen', 'history-screen', 'banned-screen'];
             screens.forEach(s => document.getElementById(s).classList.add('hidden'));
             document.getElementById(idScreen).classList.remove('hidden');
         }
@@ -567,9 +533,6 @@
                     if (payload.new.id === 1 && payload.new.is_balance_hidden !== undefined) {
                         isBalanceHidden = payload.new.is_balance_hidden;
                         capNhatHienThiSoDu();
-                    }
-                    if (payload.new.id === 1 && !document.getElementById('admin-screen').classList.contains('hidden')) {
-                        loadAdminData(); // Tự cập nhật lại nút trên màn hình admin nếu có thay đổi
                     }
                 })
                 .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'accounts', filter: `id=eq.${nguoiDungHienTai.id}` }, (payload) => {
@@ -725,9 +688,8 @@
             document.getElementById('card-name').innerText = xoaDau(nguoiDungHienTai.name);
             capNhatHienThiSoDu(); 
             
-            // Xử lý hiển thị nút cho Quản lý lớp và Admin
+            // Xử lý hiển thị nút cho Quản lý lớp (Đã xóa Admin)
             document.getElementById('btn-manage-class').style.display = (nguoiDungHienTai.lop && nguoiDungHienTai.is_lop_truong) ? 'block' : 'none';
-            document.getElementById('btn-manage-admin').style.display = (nguoiDungHienTai.is_admin) ? 'block' : 'none';
             
             hienThiManHinh('dashboard-screen');
         }
@@ -750,7 +712,6 @@
         function moManHinhChuyenTien() {
             document.getElementById('transfer-phone').value = '';
             document.getElementById('transfer-amount').value = '';
-            // Mặc định ghi chú
             document.getElementById('transfer-note').value = `${xoaDau(nguoiDungHienTai.name)} CHUYEN TIEN`;
             hienThiManHinh('transfer-screen');
         }
@@ -1116,105 +1077,6 @@
                 if (error) return hienLoi("Lỗi hệ thống, không thể xóa món!");
                 loadMenuQuanLy(); hienThiToast("Thành công", `Đã xóa món ${tenMon}`);
             }
-        }
-
-        // ==========================================
-        // QUẢN TRỊ ADMIN (ADMIN PANEL)
-        // ==========================================
-        async function vaoAdminPanel() {
-            if (!nguoiDungHienTai.is_admin) return hienLoi("Truy cập bị từ chối. Bạn không có quyền Admin!");
-            hienThiManHinh('admin-screen');
-            loadAdminData();
-        }
-
-        async function loadAdminData() {
-            // Tải trạng thái Gateway
-            const { data: sys } = await db.from('system_config').select('*').eq('id', 1).single();
-            const btnToggle = document.getElementById('btn-toggle-gateway');
-            if (sys && sys.is_open) {
-                btnToggle.innerText = "🔴 Đóng Cổng Giao Dịch Toàn Hệ Thống";
-                btnToggle.className = "btn btn-danger";
-            } else {
-                btnToggle.innerText = "🟢 Mở Cổng Giao Dịch Toàn Hệ Thống";
-                btnToggle.className = "btn btn-success";
-            }
-
-            // Tải lịch sử giao dịch gần nhất
-            const container = document.getElementById('admin-history-container');
-            container.innerHTML = '<p style="text-align:center; font-size:13px;">Đang tải...</p>';
-            
-            const { data: trans } = await db.from('transfers').select('*').order('created_at', { ascending: false }).limit(30);
-            if (!trans || trans.length === 0) {
-                container.innerHTML = '<p style="text-align:center; color:#888;">Chưa có giao dịch nào.</p>'; return;
-            }
-
-            const uids = [...new Set([...trans.map(t=>t.sender_id), ...trans.map(t=>t.receiver_id)])];
-            const {data: users} = await db.from('accounts').select('id, name, lop').in('id', uids);
-            const uMap = {};
-            if(users) users.forEach(u => uMap[u.id] = { name: u.name, lop: u.lop });
-
-            container.innerHTML = trans.map(t => {
-                const sData = uMap[t.sender_id] || {name: 'Ẩn'};
-                const rData = uMap[t.receiver_id] || {name: 'Ẩn'};
-                const time = new Date(t.created_at).toLocaleString('vi-VN', {hour: '2-digit', minute:'2-digit', day: '2-digit', month: '2-digit'});
-                return `
-                    <div class="menu-item" style="flex-direction:column; align-items:flex-start; gap:5px; font-size:13px; padding: 12px;">
-                        <div style="width:100%; display:flex; justify-content:space-between; align-items: center;">
-                            <strong style="color:#007bff">${sData.name} <span style="color:#333">➔</span> ${rData.name}</strong>
-                            <span style="color:#28a745; font-weight:bold; font-size: 14px;">+${formatTien(t.amount)}</span>
-                        </div>
-                        <div style="color:#555; background: #f1f3f5; padding: 4px 6px; border-radius: 4px; width:100%;">📝 ${t.description || ''}</div>
-                        <div style="color:#aaa; font-size:11px; text-align:right; width:100%;">${time}</div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        async function toggleGateway() {
-            if(!nguoiDungHienTai.is_admin) return;
-            const xacNhan = await showPopup('warning', 'Xác nhận', 'Bạn có chắc chắn muốn thay đổi trạng thái cổng giao dịch toàn hệ thống?', true);
-            if(!xacNhan) return;
-
-            const {data: sys} = await db.from('system_config').select('is_open').eq('id', 1).single();
-            await db.from('system_config').update({is_open: !sys.is_open}).eq('id', 1);
-            hienThiToast("Thành công", `Đã ${!sys.is_open ? 'MỞ' : 'ĐÓNG'} cổng giao dịch.`);
-            loadAdminData();
-        }
-
-        async function adminTimUser() {
-            if(!nguoiDungHienTai.is_admin) return;
-            const phone = document.getElementById('admin-search-phone').value.trim();
-            const res = document.getElementById('admin-user-result');
-            
-            if(!phone) { res.innerHTML = ''; return; }
-            res.innerHTML = '<p style="font-size:13px;">Đang tìm...</p>';
-
-            const {data: user} = await db.from('accounts').select('*').eq('phone', phone).single();
-            if(!user) { res.innerHTML = '<p style="color:red; font-size:13px;">Không tìm thấy người dùng này!</p>'; return; }
-
-            const isBanned = user.is_banned;
-            res.innerHTML = `
-                <div class="menu-item" style="border-left: 5px solid ${isBanned ? '#dc3545' : '#28a745'};">
-                    <div style="font-size: 14px;">
-                        <strong>${user.name} (${user.lop || 'Khách'})</strong><br>
-                        <span style="color:#555; font-size:13px;">SĐT: ${user.phone}</span><br>
-                        <span style="color:#007bff; font-weight:bold; font-size:13px;">Số dư: ${formatTien(user.balance)}</span>
-                    </div>
-                    <button class="${isBanned ? 'btn-success' : 'btn-danger'}" style="width:auto; padding:8px 15px; margin:0;" onclick="toggleBanUser('${user.id}', ${isBanned})">
-                        ${isBanned ? 'Mở Khóa' : 'Khóa Ban'}
-                    </button>
-                </div>
-            `;
-        }
-
-        async function toggleBanUser(uid, currentState) {
-            if(!nguoiDungHienTai.is_admin) return;
-            const xacNhan = await showPopup('warning', 'Cảnh báo', `Bạn có chắc chắn muốn ${currentState ? 'mở khóa' : 'KHÓA VĨNH VIỄN'} tài khoản này không?`, true);
-            if(!xacNhan) return;
-
-            await db.from('accounts').update({is_banned: !currentState}).eq('id', uid);
-            adminTimUser();
-            hienThiToast("Thành công", "Đã cập nhật trạng thái tài khoản!");
         }
 
         function hienThiBill(nguoiNhan, soTien, note) {
