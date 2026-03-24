@@ -303,7 +303,6 @@
             <p id="qr-desc" style="text-align: center; color: #444; margin-top: 30px; font-weight: bold; font-size: 16px; line-height: 1.5;"></p>
         </div>
 
-
         <div id="transfer-screen" class="screen hidden">
             <div class="header-top">
                 <button class="back-btn" onclick="vaoTrangChu()">❮</button>
@@ -410,7 +409,7 @@
         let realtimeChannel = null;
         let isBalanceHidden = false; 
         
-        let html5QrCode = null;
+        let html5QrCode = null; 
         let qrcodeObj = null; 
 
         function getDeviceId() {
@@ -489,7 +488,7 @@
             const config = { fps: 10, qrbox: { width: 250, height: 250 } };
 
             html5QrCode.start({ facingMode: "environment" }, config, async (decodedText) => {
-                await dongScanner();
+                await dongScanner(true);
                 xuLyKetQuaQuetQR(decodedText);
             }, (errorMessage) => {
             }).catch((err) => {
@@ -498,12 +497,14 @@
             });
         }
 
-        async function dongScanner() {
+        async function dongScanner(preventNavigate = false) {
             if (html5QrCode && html5QrCode.isScanning) {
                 await html5QrCode.stop().catch(err => console.log(err));
                 html5QrCode.clear();
             }
-            vaoTrangChu();
+            if (!preventNavigate) {
+                vaoTrangChu();
+            }
         }
 
         async function xuLyKetQuaQuetQR(text) {
@@ -522,6 +523,7 @@
             } 
             else {
                 hienLoi("Mã QR không hợp lệ!\nHãy chắc chắn đây là mã QR được tạo từ DPIBANK.");
+                vaoTrangChu();
             }
         }
 
