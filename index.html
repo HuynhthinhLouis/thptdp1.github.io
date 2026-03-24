@@ -783,10 +783,13 @@
                 const classHetHang = isHet ? 'item-hethang' : '';
                 const badgeHtml = isHet ? '<span class="badge-hethang">Đã hết</span>' : '';
                 
+                // Thay thế dấu nháy đơn và nháy kép để không vỡ chuỗi HTML
+                const safeName = mon.ten_mon.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                
                 const btnHtml = isHet
                     ? `<button class="btn-danger" style="padding: 8px 16px; border-radius: 8px; font-weight: bold; width: auto; margin: 0; cursor: not-allowed; border: none; opacity: 0.9;" disabled>Hết Hàng</button>`
                     : `<input type="number" id="qty-${mon.id}" value="1" min="1" max="50" style="width: 50px; padding: 6px; text-align: center; border: 1px solid #ccc; border-radius: 8px;">
-                       <button class="btn-buy" onclick="xuLyMuaMon('${tenLop}', '${mon.ten_mon}', ${mon.gia_tien}, 'qty-${mon.id}')">Mua</button>`;
+                       <button class="btn-buy" onclick="xuLyMuaMon('${tenLop}', '${safeName}', ${mon.gia_tien}, 'qty-${mon.id}')">Mua</button>`;
 
                 return `
                     <div class="menu-item ${classHetHang}">
@@ -1015,7 +1018,7 @@
             container.innerHTML = data.map(v => `
                 <div class="menu-item" style="padding: 10px; font-size: 13px;">
                     <div><strong>${v.ma_giam_gia}</strong> <span style="color:#dc3545;">-${formatTien(v.giam_tien)}</span></div>
-                    <div>Còn: <b style="color:#007bff">${v.so_luong}</b> lượt | <button onclick="xoaVoucher(${v.id})" style="border:none; background:none; color:red; cursor:pointer; text-decoration: underline;">Xóa mã</button></div>
+                    <div>Còn: <b style="color:#007bff">${v.so_luong}</b> lượt | <button onclick="xoaVoucher('${v.id}')" style="border:none; background:none; color:red; cursor:pointer; text-decoration: underline;">Xóa mã</button></div>
                 </div>
             `).join('');
         }
@@ -1037,12 +1040,16 @@
 
             container.innerHTML = menu.map(m => {
                 const isHet = m.het_hang === true;
+                
+                // Thay thế ký tự nháy đơn/nháy kép để không vỡ cấu trúc HTML
+                const safeName = m.ten_mon.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
                 return `
                     <div class="menu-item" style="padding: 10px 15px; opacity: ${isHet ? '0.6' : '1'};">
                         <div class="menu-item-info"><strong>${m.ten_mon} ${isHet ? '<span class="badge-hethang">Đang tạm ngưng</span>' : ''}</strong><span>${formatTien(m.gia_tien)}</span></div>
                         <div style="display: flex; gap: 5px;">
-                            <button class="${isHet ? 'btn-success' : 'btn-warning'}" style="width: auto; padding: 6px 12px; margin: 0; border-radius: 6px; border:none; cursor:pointer; font-size:13px; color: ${isHet ? '#fff' : '#333'};" onclick="doiTrangThaiMon(${m.id}, ${isHet}, '${m.ten_mon}')">${isHet ? 'Mở Bán Lại' : 'Báo Hết'}</button>
-                            <button class="btn-danger" style="width: auto; padding: 6px 12px; margin: 0; border-radius: 6px; border:none; cursor:pointer; font-size:13px;" onclick="xoaMonLop(${m.id}, '${m.ten_mon}')">Xóa</button>
+                            <button class="${isHet ? 'btn-success' : 'btn-warning'}" style="width: auto; padding: 6px 12px; margin: 0; border-radius: 6px; border:none; cursor:pointer; font-size:13px; color: ${isHet ? '#fff' : '#333'};" onclick="doiTrangThaiMon('${m.id}', ${isHet}, '${safeName}')">${isHet ? 'Mở Bán Lại' : 'Báo Hết'}</button>
+                            <button class="btn-danger" style="width: auto; padding: 6px 12px; margin: 0; border-radius: 6px; border:none; cursor:pointer; font-size:13px;" onclick="xoaMonLop('${m.id}', '${safeName}')">Xóa</button>
                         </div>
                     </div>
                 `;
