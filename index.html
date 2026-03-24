@@ -865,10 +865,6 @@
             const menuContainer = document.getElementById('menu-container');
             if (!tenLop) return hienLoi("Vui lòng nhập tên lớp cần tìm!");
             
-            if (nguoiDungHienTai.lop && nguoiDungHienTai.lop === tenLop) {
-                return hienLoi("⛔ Bạn không thể mua hàng từ gian hàng của chính lớp mình!");
-            }
-            
             menuContainer.innerHTML = '<p style="text-align:center; color:#555;">Đang tải dữ liệu từ gian hàng...</p>';
             const { data: menu, error } = await db.from('thuc_don').select('*').eq('lop', tenLop);
             
@@ -877,12 +873,23 @@
                 return;
             }
 
-            let htmlStr = `
-                <div style="background: #fff8e1; padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px dashed #ffc107;">
-                    <label style="font-size: 12px; font-weight: bold; color: #d39e00; display:block; margin-bottom: 5px;">🎉 Dùng Voucher Lớp ${tenLop}</label>
-                    <input type="text" id="buyer-voucher-code" placeholder="Nhập mã giảm giá..." style="width: 100%; padding: 10px; border: 1px solid #ffe082; border-radius: 6px; text-transform: uppercase;">
-                </div>
-            `;
+            let htmlStr = "";
+            const isMyClass = (nguoiDungHienTai.lop && nguoiDungHienTai.lop === tenLop);
+            
+            if (!isMyClass) {
+                htmlStr += `
+                    <div style="background: #fff8e1; padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px dashed #ffc107;">
+                        <label style="font-size: 12px; font-weight: bold; color: #d39e00; display:block; margin-bottom: 5px;">🎉 Dùng Voucher Lớp ${tenLop}</label>
+                        <input type="text" id="buyer-voucher-code" placeholder="Nhập mã giảm giá..." style="width: 100%; padding: 10px; border: 1px solid #ffe082; border-radius: 6px; text-transform: uppercase;">
+                    </div>
+                `;
+            } else {
+                 htmlStr += `
+                    <div style="background: #eef5ff; padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px dashed #007bff; text-align: center;">
+                        <span style="font-size: 13px; font-weight: bold; color: #007bff;">👁️ Bạn đang xem gian hàng của lớp mình</span>
+                    </div>
+                `;
+            }
 
             htmlStr += menu.map(mon => {
                 const isHet = mon.het_hang === true;
@@ -890,10 +897,15 @@
                 const badgeHtml = isHet ? '<span class="badge-hethang">Đã hết</span>' : '';
                 const safeName = mon.ten_mon.replace(/'/g, "\\'").replace(/"/g, '&quot;');
                 
-                const btnHtml = isHet
-                    ? `<button class="btn-danger" style="padding: 8px 16px; border-radius: 8px; font-weight: bold; width: auto; margin: 0; cursor: not-allowed; border: none; opacity: 0.9;" disabled>Hết Hàng</button>`
-                    : `<input type="number" id="qty-${mon.id}" value="1" min="1" max="50" style="width: 50px; padding: 6px; text-align: center; border: 1px solid #ccc; border-radius: 8px;">
+                let btnHtml = "";
+                if (isHet) {
+                    btnHtml = `<button class="btn-danger" style="padding: 8px 16px; border-radius: 8px; font-weight: bold; width: auto; margin: 0; cursor: not-allowed; border: none; opacity: 0.9;" disabled>Hết Hàng</button>`;
+                } else if (isMyClass) {
+                    btnHtml = `<button class="btn-secondary" style="padding: 8px 16px; border-radius: 8px; font-weight: bold; width: auto; margin: 0; cursor: not-allowed; border: none; background: #e9ecef; color: #6c757d;" disabled>Lớp Mình</button>`;
+                } else {
+                    btnHtml = `<input type="number" id="qty-${mon.id}" value="1" min="1" max="50" style="width: 50px; padding: 6px; text-align: center; border: 1px solid #ccc; border-radius: 8px;">
                        <button class="btn-buy" onclick="xuLyMuaMon('${tenLop}', '${safeName}', ${mon.gia_tien}, 'qty-${mon.id}')">Mua</button>`;
+                }
 
                 return `
                     <div class="menu-item ${classHetHang}">
@@ -916,7 +928,7 @@
             const soLuong = parseInt(document.getElementById(inputId).value);
             if (isNaN(soLuong) || soLuong < 1) return hienLoi("Số lượng không hợp lệ!");
 
-            const voucherCode = document.getElementById('buyer-voucher-code').value.trim().toUpperCase();
+            const voucherCode = document.getElementById('buyer-voucher-code') ? document.getElementById('buyer-voucher-code').value.trim().toUpperCase() : '';
             let giamGia = 0;
             let voucherId = null;
             let soLuongVoucherMoi = 0;
