@@ -303,6 +303,7 @@
             <p id="qr-desc" style="text-align: center; color: #444; margin-top: 30px; font-weight: bold; font-size: 16px; line-height: 1.5;"></p>
         </div>
 
+
         <div id="transfer-screen" class="screen hidden">
             <div class="header-top">
                 <button class="back-btn" onclick="vaoTrangChu()">❮</button>
@@ -330,7 +331,7 @@
                 <h2 style="margin: 0;">Gian Hàng</h2>
             </div>
             <div class="input-group" style="display: flex; gap: 10px;">
-                <input type="text" id="food-class" placeholder="Nhập tên lớp (VD: 12A5)" style="text-transform: uppercase;">
+                <input type="text" id="food-search" placeholder="Tên lớp (12A5) hoặc tên món..." style="text-transform: uppercase;">
                 <button class="btn btn-primary" style="width: auto; margin: 0; padding: 0 20px;" onclick="timMenu()">Tìm</button>
             </div>
             <div id="menu-container" class="menu-list">
@@ -409,7 +410,7 @@
         let realtimeChannel = null;
         let isBalanceHidden = false; 
         
-        let html5QrCode = null; 
+        let html5QrCode = null;
         let qrcodeObj = null; 
 
         function getDeviceId() {
@@ -488,7 +489,7 @@
             const config = { fps: 10, qrbox: { width: 250, height: 250 } };
 
             html5QrCode.start({ facingMode: "environment" }, config, async (decodedText) => {
-                await dongScanner(true);
+                await dongScanner();
                 xuLyKetQuaQuetQR(decodedText);
             }, (errorMessage) => {
             }).catch((err) => {
@@ -497,14 +498,12 @@
             });
         }
 
-        async function dongScanner(preventNavigate = false) {
+        async function dongScanner() {
             if (html5QrCode && html5QrCode.isScanning) {
                 await html5QrCode.stop().catch(err => console.log(err));
                 html5QrCode.clear();
             }
-            if (!preventNavigate) {
-                vaoTrangChu();
-            }
+            vaoTrangChu();
         }
 
         async function xuLyKetQuaQuetQR(text) {
@@ -517,13 +516,12 @@
             else if (text.startsWith("DPIBANK-SHOP:")) {
                 const lop = text.split(":")[1];
                 hienThiManHinh('food-screen');
-                document.getElementById('food-class').value = lop;
+                document.getElementById('food-search').value = lop;
                 hienThiToast("Đã nhận diện", "Đang mở gian hàng lớp " + lop + "...");
                 await timMenu(); 
             } 
             else {
                 hienLoi("Mã QR không hợp lệ!\nHãy chắc chắn đây là mã QR được tạo từ DPIBANK.");
-                vaoTrangChu();
             }
         }
 
@@ -861,34 +859,30 @@
         }
 
         async function timMenu() {
-            const tenLop = document.getElementById('food-class').value.trim().toUpperCase();
+            const keyword = document.getElementById('food-search').value.trim();
             const menuContainer = document.getElementById('menu-container');
-            if (!tenLop) return hienLoi("Vui lòng nhập tên lớp cần tìm!");
+            if (!keyword) return hienLoi("Vui lòng nhập tên lớp hoặc tên món cần tìm!");
             
-            menuContainer.innerHTML = '<p style="text-align:center; color:#555;">Đang tải dữ liệu từ gian hàng...</p>';
-            const { data: menu, error } = await db.from('thuc_don').select('*').eq('lop', tenLop);
+            menuContainer.innerHTML = '<p style="text-align:center; color:#555;">Đang tìm kiếm...</p>';
+            
+            const { data: menu, error } = await db.from('thuc_don')
+                .select('*')
+                .or(`lop.ilike.%${keyword}%,ten_mon.ilike.%${keyword}%`);
             
             if (error || !menu || menu.length === 0) {
-                menuContainer.innerHTML = `<p style="text-align:center; color:#dc3545; font-weight:bold;">Gian hàng ${tenLop} hiện chưa có món ăn nào!</p>`;
+                menuContainer.innerHTML = `<p style="text-align:center; color:#dc3545; font-weight:bold;">Không tìm thấy món ăn hoặc gian hàng nào phù hợp!</p>`;
                 return;
             }
 
-            let htmlStr = "";
-            const isMyClass = (nguoiDungHienTai.lop && nguoiDungHienTai.lop === tenLop);
-            
-            if (!isMyClass) {
+            const isSingleClassSearch = menu.every(m => m.lop.toUpperCase() === keyword.toUpperCase());
+
+            let htmlStr = '';
+            if (isSingleClassSearch) {
                 htmlStr += `
-                    <div style="background: #fff8e1; padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px dashed #ffc107;">
-                        <label style="font-size: 12px; font-weight: bold; color: #d39e00; display:block; margin-bottom: 5px;">🎉 Dùng Voucher Lớp ${tenLop}</label>
-                        <input type="text" id="buyer-voucher-code" placeholder="Nhập mã giảm giá..." style="width: 100%; padding: 10px; border: 1px solid #ffe082; border-radius: 6px; text-transform: uppercase;">
-                    </div>
-                `;
-            } else {
-                 htmlStr += `
-                    <div style="background: #eef5ff; padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px dashed #007bff; text-align: center;">
-                        <span style="font-size: 13px; font-weight: bold; color: #007bff;">👁️ Bạn đang xem gian hàng của lớp mình</span>
-                    </div>
-                `;
+                <div style="background: #fff8e1; padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px dashed #ffc107;">
+                    <label style="font-size: 12px; font-weight: bold; color: #d39e00; display:block; margin-bottom: 5px;">🎉 Dùng Voucher Lớp ${keyword.toUpperCase()}</label>
+                    <input type="text" id="buyer-voucher-code" placeholder="Nhập mã giảm giá..." style="width: 100%; padding: 10px; border: 1px solid #ffe082; border-radius: 6px; text-transform: uppercase;">
+                </div>`;
             }
 
             htmlStr += menu.map(mon => {
@@ -897,19 +891,18 @@
                 const badgeHtml = isHet ? '<span class="badge-hethang">Đã hết</span>' : '';
                 const safeName = mon.ten_mon.replace(/'/g, "\\'").replace(/"/g, '&quot;');
                 
-                let btnHtml = "";
-                if (isHet) {
-                    btnHtml = `<button class="btn-danger" style="padding: 8px 16px; border-radius: 8px; font-weight: bold; width: auto; margin: 0; cursor: not-allowed; border: none; opacity: 0.9;" disabled>Hết Hàng</button>`;
-                } else if (isMyClass) {
-                    btnHtml = `<button class="btn-secondary" style="padding: 8px 16px; border-radius: 8px; font-weight: bold; width: auto; margin: 0; cursor: not-allowed; border: none; background: #e9ecef; color: #6c757d;" disabled>Lớp Mình</button>`;
-                } else {
-                    btnHtml = `<input type="number" id="qty-${mon.id}" value="1" min="1" max="50" style="width: 50px; padding: 6px; text-align: center; border: 1px solid #ccc; border-radius: 8px;">
-                       <button class="btn-buy" onclick="xuLyMuaMon('${tenLop}', '${safeName}', ${mon.gia_tien}, 'qty-${mon.id}')">Mua</button>`;
-                }
+                const btnHtml = isHet
+                    ? `<button class="btn-danger" style="padding: 8px 16px; border-radius: 8px; font-weight: bold; width: auto; margin: 0; cursor: not-allowed; border: none; opacity: 0.9;" disabled>Hết Hàng</button>`
+                    : `<input type="number" id="qty-${mon.id}" value="1" min="1" max="50" style="width: 50px; padding: 6px; text-align: center; border: 1px solid #ccc; border-radius: 8px;">
+                       <button class="btn-buy" onclick="xuLyMuaMon('${mon.lop}', '${safeName}', ${mon.gia_tien}, 'qty-${mon.id}')">Mua</button>`;
 
                 return `
                     <div class="menu-item ${classHetHang}">
-                        <div class="menu-item-info"><strong>${mon.ten_mon} ${badgeHtml}</strong><span>${formatTien(mon.gia_tien)}</span></div>
+                        <div class="menu-item-info">
+                            <strong>${mon.ten_mon} ${badgeHtml}</strong>
+                            <span style="display:block; font-size: 13px; color: #666; font-weight: normal; margin-top: 3px;">Gian hàng: Lớp ${mon.lop}</span>
+                            <span style="color: #007bff; font-weight: bold; font-size: 15px; margin-top: 3px; display: block;">${formatTien(mon.gia_tien)}</span>
+                        </div>
                         <div style="display: flex; align-items: center; gap: 8px;">${btnHtml}</div>
                     </div>
                 `;
@@ -921,14 +914,12 @@
         async function xuLyMuaMon(tenLop, tenMon, giaTien, inputId) {
             if (!(await kiemTraCong())) return;
 
-            if (nguoiDungHienTai.lop && nguoiDungHienTai.lop === tenLop) {
-                return hienLoi("⛔ Bạn không thể mua hàng từ gian hàng của chính lớp mình!");
-            }
-
             const soLuong = parseInt(document.getElementById(inputId).value);
             if (isNaN(soLuong) || soLuong < 1) return hienLoi("Số lượng không hợp lệ!");
 
-            const voucherCode = document.getElementById('buyer-voucher-code') ? document.getElementById('buyer-voucher-code').value.trim().toUpperCase() : '';
+            const voucherEl = document.getElementById('buyer-voucher-code');
+            const voucherCode = voucherEl ? voucherEl.value.trim().toUpperCase() : '';
+            
             let giamGia = 0;
             let voucherId = null;
             let soLuongVoucherMoi = 0;
