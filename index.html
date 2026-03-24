@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DPIBANK - Ngân Hàng Số THPT Số 1 Đức Phổ</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
 
@@ -68,16 +71,19 @@
         .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
         .action-box { background: white; border: 1px solid #eef2f5; border-radius: 16px; padding: 15px 10px; text-align: center; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
         .action-box:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0,123,255,0.1); border-color: #cce5ff; }
-        .action-icon { width: 50px; height: 50px; background: #eef5ff; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; margin: 0 auto 10px auto; color: #007bff; }
+        .action-icon { width: 45px; height: 45px; background: #eef5ff; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 22px; margin: 0 auto 10px auto; color: #007bff; }
         .action-box.food .action-icon { background: #fff8e1; color: #ffc107; }
+        .action-box.qr .action-icon { background: #f3e5f5; color: #9c27b0; }
+        .action-box.myqr .action-icon { background: #e0f7fa; color: #00bcd4; }
+        .action-box.history { grid-column: span 2; }
         .action-box.history .action-icon { background: #e8f5e9; color: #28a745; }
         .action-box.class-manage { grid-column: span 2; background: #f8f9fa; border-color: #dee2e6; display: none; }
         .action-box.class-manage .action-icon { background: #e2e3e5; color: #495057; }
         .action-box.class-manage:hover { border-color: #adb5bd; }
-        .action-title { font-size: 14px; font-weight: bold; color: #444; }
+        .action-title { font-size: 13px; font-weight: bold; color: #444; }
 
         .header-top { display: flex; align-items: center; margin-bottom: 25px; }
-        .back-btn { background: #f8f9fa; border: none; color: #333; font-weight: bold; font-size: 18px; cursor: pointer; width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 15px; transition: 0.2s; }
+        .back-btn { background: #f8f9fa; border: none; color: #333; font-weight: bold; font-size: 18px; cursor: pointer; width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 15px; transition: 0.2s; flex-shrink: 0; }
         .back-btn:hover { background: #e2e6ea; }
 
         .menu-list { text-align: left; margin-top: 10px; max-height: 400px; overflow-y: auto; padding-right: 5px; }
@@ -124,6 +130,10 @@
         .bill-divider { border-top: 2px dashed #eee; margin: 15px 0; }
         .bill-total { font-size: 28px; font-weight: bold; color: #dc3545; text-align: center; margin-top: 10px; }
         .success-icon { font-size: 60px; margin-bottom: 5px; color: #28a745; }
+
+        /* Custom Scanner Style */
+        #reader { width: 100%; border-radius: 15px; overflow: hidden; border: 2px solid #007bff; margin-top: 10px; }
+        #reader__dashboard_section_csr span { color: #dc3545; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -247,7 +257,16 @@
                     <div class="action-icon">🍔</div>
                     <div class="action-title">Gian Hàng</div>
                 </div>
-                <div class="action-box history" onclick="xemLichSu()" style="grid-column: span 2;">
+                <div class="action-box qr" onclick="moManHinhQuetQR()">
+                    <div class="action-icon">📷</div>
+                    <div class="action-title">Quét Mã</div>
+                </div>
+                <div class="action-box myqr" onclick="moManHinhHienThiQR('canhan', 'dashboard-screen')">
+                    <div class="action-icon">🔳</div>
+                    <div class="action-title">Mã Của Tôi</div>
+                </div>
+
+                <div class="action-box history" onclick="xemLichSu()">
                     <div class="action-icon">📜</div>
                     <div class="action-title">Lịch Sử Giao Dịch</div>
                 </div>
@@ -259,6 +278,31 @@
             
             <button class="btn btn-secondary" onclick="dangXuat()">Đăng Xuất</button>
         </div>
+
+        <div id="scanner-screen" class="screen hidden">
+            <div class="header-top">
+                <button class="back-btn" onclick="dongScanner()">❮</button>
+                <h2 style="margin: 0;">Quét Mã QR</h2>
+            </div>
+            <p style="color: #666; font-size: 14px; text-align: center; margin-bottom: 10px;">
+                Đưa mã QR của người nhận hoặc gian hàng vào khung hình.
+            </p>
+            <div id="reader"></div>
+        </div>
+
+        <div id="qr-display-screen" class="screen hidden" style="align-items: center; justify-content: flex-start;">
+            <div class="header-top" style="width: 100%;">
+                <button class="back-btn" id="btn-qr-back">❮</button>
+                <h2 style="margin: 0;" id="qr-title">Mã QR</h2>
+            </div>
+            
+            <div style="background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,123,255,0.15); margin-top: 30px; border: 2px solid #eef5ff; display: flex; flex-direction: column; align-items: center;">
+                <div id="qrcode-container" style="background: white; padding: 10px; border-radius: 10px;"></div>
+            </div>
+            
+            <p id="qr-desc" style="text-align: center; color: #444; margin-top: 30px; font-weight: bold; font-size: 16px; line-height: 1.5;"></p>
+        </div>
+
 
         <div id="transfer-screen" class="screen hidden">
             <div class="header-top">
@@ -291,7 +335,7 @@
                 <button class="btn btn-primary" style="width: auto; margin: 0; padding: 0 20px;" onclick="timMenu()">Tìm</button>
             </div>
             <div id="menu-container" class="menu-list">
-                <p style="text-align: center; color: #888; font-style: italic; margin-top: 30px;">Nhập mã lớp để xem thực đơn!</p>
+                <p style="text-align: center; color: #888; font-style: italic; margin-top: 30px;">Nhập mã lớp hoặc quét mã QR để xem thực đơn!</p>
             </div>
         </div>
 
@@ -309,10 +353,12 @@
                 <h2 style="margin: 0;">Quản Lý Lớp <span id="manage-class-name" style="color:#007bff;"></span></h2>
             </div>
 
-            <div style="background: linear-gradient(135deg, #17a2b8, #117a8b); color: white; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 25px; box-shadow: 0 5px 15px rgba(23,162,184,0.3);">
+            <div style="background: linear-gradient(135deg, #17a2b8, #117a8b); color: white; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 15px; box-shadow: 0 5px 15px rgba(23,162,184,0.3);">
                 <div style="font-size: 14px; opacity: 0.9;">Tổng Doanh Thu Gian Hàng</div>
                 <div id="class-revenue" style="font-size: 32px; font-weight: bold; margin-top: 5px;">0 VNĐ</div>
             </div>
+            
+            <button class="btn" style="background: #eef5ff; color: #007bff; border: 2px dashed #007bff; margin-bottom: 25px;" onclick="moManHinhHienThiQR('gianhang', 'class-manage-screen')">🔳 Lấy Mã QR Gian Hàng</button>
 
             <h4 style="margin: 0 0 10px 0; color: #555;">Mã Giảm Giá (Voucher)</h4>
             <div style="display: flex; gap: 8px; margin-bottom: 10px; width: 100%; align-items: stretch;">
@@ -364,6 +410,9 @@
         let realtimeChannel = null;
         let isBalanceHidden = false; 
         
+        let html5QrCode = null;
+        let qrcodeObj = null; 
+
         function getDeviceId() {
             let deviceId = localStorage.getItem('dpibank_device_id');
             if (!deviceId) {
@@ -392,6 +441,87 @@
             const el = document.getElementById('card-balance');
             if(el && nguoiDungHienTai) {
                 el.innerText = isBalanceHidden ? "******" : formatTien(nguoiDungHienTai.balance);
+            }
+        }
+
+        function moManHinhHienThiQR(type, backScreenId) {
+            document.getElementById('qrcode-container').innerHTML = '';
+            let qrText = "";
+            let title = "";
+            let desc = "";
+
+            if(type === 'canhan') {
+                qrText = "DPIBANK-TRANSFER:" + nguoiDungHienTai.phone;
+                title = "Mã QR Nhận Tiền";
+                desc = `<span style="color:#007bff; font-size: 20px;">${nguoiDungHienTai.name}</span><br><span style="font-weight: normal;">SĐT: ${nguoiDungHienTai.phone}</span>`;
+            } else if (type === 'gianhang') {
+                qrText = "DPIBANK-SHOP:" + nguoiDungHienTai.lop;
+                title = "QR Gian Hàng";
+                desc = `<span style="color:#28a745; font-size: 20px;">Gian Hàng Lớp ${nguoiDungHienTai.lop}</span><br><span style="font-weight: normal;">Quét mã này để gọi món nhanh!</span>`;
+            }
+
+            document.getElementById('qr-title').innerText = title;
+            document.getElementById('qr-desc').innerHTML = desc;
+
+            document.getElementById('btn-qr-back').onclick = () => {
+                if (backScreenId === 'class-manage-screen') vaoQuanLyLop();
+                else vaoTrangChu();
+            };
+
+            qrcodeObj = new QRCode(document.getElementById("qrcode-container"), {
+                text: qrText,
+                width: 230,
+                height: 230,
+                colorDark : type === 'canhan' ? "#007bff" : "#28a745",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+
+            hienThiManHinh('qr-display-screen');
+        }
+
+        function moManHinhQuetQR() {
+            hienThiManHinh('scanner-screen');
+            
+            if(html5QrCode) html5QrCode.clear();
+
+            html5QrCode = new Html5Qrcode("reader");
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+            html5QrCode.start({ facingMode: "environment" }, config, async (decodedText) => {
+                await dongScanner();
+                xuLyKetQuaQuetQR(decodedText);
+            }, (errorMessage) => {
+            }).catch((err) => {
+                dongScanner();
+                hienLoi("Không thể truy cập Camera. Vui lòng cấp quyền sử dụng máy ảnh cho trình duyệt!");
+            });
+        }
+
+        async function dongScanner() {
+            if (html5QrCode && html5QrCode.isScanning) {
+                await html5QrCode.stop().catch(err => console.log(err));
+                html5QrCode.clear();
+            }
+            vaoTrangChu();
+        }
+
+        async function xuLyKetQuaQuetQR(text) {
+            if (text.startsWith("DPIBANK-TRANSFER:")) {
+                const phone = text.split(":")[1];
+                moManHinhChuyenTien();
+                document.getElementById('transfer-phone').value = phone;
+                hienThiToast("Đã nhận diện", "Đã tự động điền SĐT người nhận!");
+            } 
+            else if (text.startsWith("DPIBANK-SHOP:")) {
+                const lop = text.split(":")[1];
+                hienThiManHinh('food-screen');
+                document.getElementById('food-class').value = lop;
+                hienThiToast("Đã nhận diện", "Đang mở gian hàng lớp " + lop + "...");
+                await timMenu(); 
+            } 
+            else {
+                hienLoi("Mã QR không hợp lệ!\nHãy chắc chắn đây là mã QR được tạo từ DPIBANK.");
             }
         }
 
@@ -464,7 +594,7 @@
         function hienLoi(msg) { return showPopup('error', 'Lỗi', msg); }
 
         function hienThiManHinh(idScreen) {
-            const screens = ['login-screen', 'reset-screen', 'update-profile-screen', 'dashboard-screen', 'transfer-screen', 'food-screen', 'class-manage-screen', 'bill-screen', 'history-screen', 'banned-screen'];
+            const screens = ['login-screen', 'reset-screen', 'update-profile-screen', 'dashboard-screen', 'transfer-screen', 'food-screen', 'class-manage-screen', 'bill-screen', 'history-screen', 'banned-screen', 'scanner-screen', 'qr-display-screen'];
             screens.forEach(s => document.getElementById(s).classList.add('hidden'));
             document.getElementById(idScreen).classList.remove('hidden');
         }
@@ -656,6 +786,8 @@
         }
 
         async function vaoTrangChu() {
+            if (html5QrCode && html5QrCode.isScanning) { html5QrCode.stop().then(()=>{html5QrCode.clear()}).catch(e=>e); }
+
             const { data } = await db.from('accounts').select('*').eq('id', nguoiDungHienTai.id).single();
             if(data) nguoiDungHienTai = data;
 
@@ -667,7 +799,6 @@
             document.getElementById('card-name').innerText = xoaDau(nguoiDungHienTai.name);
             capNhatHienThiSoDu(); 
             
-            // Xử lý hiển thị nút cho Quản lý lớp (Đã xóa Admin)
             document.getElementById('btn-manage-class').style.display = (nguoiDungHienTai.lop && nguoiDungHienTai.is_lop_truong) ? 'block' : 'none';
             
             hienThiManHinh('dashboard-screen');
@@ -755,8 +886,6 @@
                 const isHet = mon.het_hang === true;
                 const classHetHang = isHet ? 'item-hethang' : '';
                 const badgeHtml = isHet ? '<span class="badge-hethang">Đã hết</span>' : '';
-                
-                // Thay thế dấu nháy đơn và nháy kép để không vỡ chuỗi HTML
                 const safeName = mon.ten_mon.replace(/'/g, "\\'").replace(/"/g, '&quot;');
                 
                 const btnHtml = isHet
@@ -1007,8 +1136,6 @@
 
             container.innerHTML = menu.map(m => {
                 const isHet = m.het_hang === true;
-                
-                // Thay thế ký tự nháy đơn/nháy kép để không vỡ cấu trúc HTML
                 const safeName = m.ten_mon.replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
                 return `
