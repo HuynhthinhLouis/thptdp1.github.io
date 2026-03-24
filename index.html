@@ -450,12 +450,14 @@
             let title = "";
             let desc = "";
 
+            const baseUrl = "https://huynhthinhlouis.github.io/thptdp1.github.io/";
+
             if(type === 'canhan') {
-                qrText = "DPIBANK-TRANSFER:" + nguoiDungHienTai.phone;
+                qrText = baseUrl + "?transfer=" + nguoiDungHienTai.phone;
                 title = "Mã QR Nhận Tiền";
                 desc = `<span style="color:#007bff; font-size: 20px;">${nguoiDungHienTai.name}</span><br><span style="font-weight: normal;">SĐT: ${nguoiDungHienTai.phone}</span>`;
             } else if (type === 'gianhang') {
-                qrText = "DPIBANK-SHOP:" + nguoiDungHienTai.lop;
+                qrText = baseUrl + "?shop=" + nguoiDungHienTai.lop;
                 title = "QR Gian Hàng";
                 desc = `<span style="color:#28a745; font-size: 20px;">Gian Hàng Lớp ${nguoiDungHienTai.lop}</span><br><span style="font-weight: normal;">Quét mã này để gọi món nhanh!</span>`;
             }
@@ -507,17 +509,37 @@
         }
 
         async function xuLyKetQuaQuetQR(text) {
-            if (text.startsWith("DPIBANK-TRANSFER:")) {
-                const phone = text.split(":")[1];
+            let actionType = null;
+            let actionValue = null;
+
+            try {
+                const url = new URL(text);
+                if (url.searchParams.has('transfer')) {
+                    actionType = 'transfer';
+                    actionValue = url.searchParams.get('transfer');
+                } else if (url.searchParams.has('shop')) {
+                    actionType = 'shop';
+                    actionValue = url.searchParams.get('shop');
+                }
+            } catch(e) {
+                if (text.startsWith("DPIBANK-TRANSFER:")) {
+                    actionType = 'transfer';
+                    actionValue = text.split(":")[1];
+                } else if (text.startsWith("DPIBANK-SHOP:")) {
+                    actionType = 'shop';
+                    actionValue = text.split(":")[1];
+                }
+            }
+
+            if (actionType === 'transfer') {
                 moManHinhChuyenTien();
-                document.getElementById('transfer-phone').value = phone;
+                document.getElementById('transfer-phone').value = actionValue;
                 hienThiToast("Đã nhận diện", "Đã tự động điền SĐT người nhận!");
             } 
-            else if (text.startsWith("DPIBANK-SHOP:")) {
-                const lop = text.split(":")[1];
+            else if (actionType === 'shop') {
                 hienThiManHinh('food-screen');
-                document.getElementById('food-search').value = lop;
-                hienThiToast("Đã nhận diện", "Đang mở gian hàng lớp " + lop + "...");
+                document.getElementById('food-search').value = actionValue;
+                hienThiToast("Đã nhận diện", "Đang mở gian hàng lớp " + actionValue + "...");
                 await timMenu(); 
             } 
             else {
@@ -802,6 +824,30 @@
             document.getElementById('btn-manage-class').style.display = (nguoiDungHienTai.lop && nguoiDungHienTai.is_lop_truong) ? 'block' : 'none';
             
             hienThiManHinh('dashboard-screen');
+
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            if (urlParams.has('transfer')) {
+                const phone = urlParams.get('transfer');
+                window.history.replaceState({}, document.title, window.location.pathname); 
+                
+                setTimeout(() => {
+                    moManHinhChuyenTien();
+                    document.getElementById('transfer-phone').value = phone;
+                    hienThiToast("Đã nhận diện", "Đã tự động điền SĐT người nhận!");
+                }, 300);
+
+            } else if (urlParams.has('shop')) {
+                const lop = urlParams.get('shop');
+                window.history.replaceState({}, document.title, window.location.pathname);
+                
+                setTimeout(async () => {
+                    hienThiManHinh('food-screen');
+                    document.getElementById('food-search').value = lop;
+                    hienThiToast("Đã nhận diện", "Đang mở gian hàng lớp " + lop + "...");
+                    await timMenu();
+                }, 300);
+            }
         }
 
         async function dangXuat() {
