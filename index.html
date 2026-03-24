@@ -491,21 +491,23 @@
             const config = { fps: 10, qrbox: { width: 250, height: 250 } };
 
             html5QrCode.start({ facingMode: "environment" }, config, async (decodedText) => {
-                await dongScanner();
+                await dongScanner(false);
                 xuLyKetQuaQuetQR(decodedText);
             }, (errorMessage) => {
             }).catch((err) => {
-                dongScanner();
+                dongScanner(true);
                 hienLoi("Không thể truy cập Camera. Vui lòng cấp quyền sử dụng máy ảnh cho trình duyệt!");
             });
         }
 
-        async function dongScanner() {
+        async function dongScanner(veTrangChu = true) {
             if (html5QrCode && html5QrCode.isScanning) {
                 await html5QrCode.stop().catch(err => console.log(err));
                 html5QrCode.clear();
             }
-            vaoTrangChu();
+            if (veTrangChu) {
+                vaoTrangChu();
+            }
         }
 
         async function xuLyKetQuaQuetQR(text) {
