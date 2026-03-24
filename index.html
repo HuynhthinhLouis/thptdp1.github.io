@@ -356,9 +356,6 @@
     </div>
 
     <script>
-        // ==========================================
-        // CẤU HÌNH SUPABASE
-        // ==========================================
         const URL_SUPABASE = 'https://fiyhdugintgtlwvvartz.supabase.co';
         const ANON_KEY_SUPABASE = 'sb_publishable_TkryPUlrB-SMF9Rtm0wenA_KpPraRrp';
         const db = supabase.createClient(URL_SUPABASE, ANON_KEY_SUPABASE);
@@ -366,10 +363,7 @@
         let nguoiDungHienTai = null;
         let realtimeChannel = null;
         let isBalanceHidden = false; 
-
-        // ==========================================
-        // 1. TẠO HOẶC LẤY MÃ THIẾT BỊ (DEVICE ID)
-        // ==========================================
+        
         function getDeviceId() {
             let deviceId = localStorage.getItem('dpibank_device_id');
             if (!deviceId) {
@@ -379,9 +373,6 @@
             return deviceId;
         }
 
-        // ==========================================
-        // 2. KIỂM TRA THIẾT BỊ BỊ CẤM
-        // ==========================================
         async function kiemTraThietBiBiCam() {
             const deviceId = getDeviceId();
             document.getElementById('display-device-id').innerText = `Mã TB: ${deviceId}`;
@@ -404,9 +395,6 @@
             }
         }
 
-        // ==========================================
-        // AUTO LOGIN
-        // ==========================================
         async function kiemTraDangNhapTuDong() {
             if (await kiemTraThietBiBiCam()) return;
 
@@ -429,9 +417,6 @@
         }
         kiemTraDangNhapTuDong();
 
-        // ==========================================
-        // UI THÔNG BÁO PUSH (TOAST)
-        // ==========================================
         function hienThiToast(title, desc, isClassFund = false) {
             const wrapper = document.getElementById('toast-wrapper');
             const toast = document.createElement('div');
@@ -497,9 +482,6 @@
             return true;
         }
 
-        // ==========================================
-        // LOGIC LẮNG NGHE GIAO DỊCH & CÀI ĐẶT REALTIME
-        // ==========================================
         function batDauLangNgheGiaoDich() {
             if (realtimeChannel) db.removeChannel(realtimeChannel);
 
@@ -553,9 +535,6 @@
                 .subscribe();
         }
 
-        // ==========================================
-        // ĐĂNG NHẬP (HAI BƯỚC) & TẠO MỚI TỰ ĐỘNG
-        // ==========================================
         async function xuLyDangNhap() {
             if (await kiemTraThietBiBiCam()) return;
 
@@ -706,9 +685,6 @@
             quayLaiNhapSdt(); hienThiManHinh('login-screen');
         }
 
-        // ==========================================
-        // CHUYỂN TIỀN & GHI CHÚ
-        // ==========================================
         function moManHinhChuyenTien() {
             document.getElementById('transfer-phone').value = '';
             document.getElementById('transfer-amount').value = '';
@@ -751,9 +727,6 @@
             hienThiBill(ngNhan.name, soTien, note);
         }
 
-        // ==========================================
-        // GIAN HÀNG & MÃ GIẢM GIÁ
-        // ==========================================
         async function timMenu() {
             const tenLop = document.getElementById('food-class').value.trim().toUpperCase();
             const menuContainer = document.getElementById('menu-container');
@@ -861,9 +834,6 @@
             hienThiBill(accQuyLop.name, tongTien, noteClean);
         }
 
-        // ==========================================
-        // LỊCH SỬ CÁ NHÂN
-        // ==========================================
         async function xemLichSu() {
             hienThiManHinh('history-screen');
             const container = document.getElementById('history-container');
@@ -905,9 +875,6 @@
             }).join('');
         }
 
-        // ==========================================
-        // QUẢN LÝ LỚP & HOÀN TIỀN
-        // ==========================================
         async function vaoQuanLyLop() {
             if (!nguoiDungHienTai.is_lop_truong) return hienLoi("⛔ CẢNH BÁO: Chỉ Lớp trưởng mới có quyền truy cập!");
             hienThiManHinh('class-manage-screen');
