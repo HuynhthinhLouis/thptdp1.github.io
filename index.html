@@ -413,6 +413,57 @@
         let html5QrCode = null;
         let qrcodeObj = null; 
 
+        const clubQuotes = {
+            "PCI": [
+                "Bức ảnh đẹp nhất không nằm ở ống kính, mà nằm ở góc nhìn và trái tim của người cầm máy.",
+                "PCI không chỉ chụp ảnh, chúng mình đóng băng thời gian và lưu giữ thanh xuân.",
+                "Nhiếp ảnh là một nút bấm, nhưng đằng sau nó là cả một câu chuyện chưa kể.",
+                "Có những khoảnh khắc trôi qua rất nhanh, nhưng nhờ có PCI, nó trở thành vĩnh cửu.",
+                "Ánh sáng, góc độ và một tâm hồn nhạy cảm - đó là ngôn ngữ của chúng mình.",
+                "Qua lăng kính của PCI, THPT Số 1 Đức Phổ luôn rực rỡ một cách diệu kỳ.",
+                "Đừng chỉ nhìn bằng mắt, hãy cảm nhận bằng trái tim và lưu lại bằng khung hình.",
+                "Mỗi bức ảnh là một tấm vé khứ hồi đưa bạn trở lại với những kỷ niệm đẹp nhất.",
+                "PCI - Nơi biến những điều bình dị xung quanh trở thành nghệ thuật.",
+                "Thanh xuân giống như một thước phim, và chúng mình là những người quay phim tận tâm nhất."
+            ],
+            "ROY": [
+                "Khi ngôn từ bất lực, âm nhạc của ROY sẽ lên tiếng thay bạn.",
+                "Mỗi nốt nhạc vang lên là một nhịp đập của tuổi trẻ, đam mê và nhiệt huyết.",
+                "ROY không chỉ hát, chúng mình kể câu chuyện thanh xuân bằng giai điệu.",
+                "Âm nhạc là cầu nối kỳ diệu nhất giữa những tâm hồn xa lạ.",
+                "Đừng giấu đi giọng hát của mình, vì thế giới này cần những nốt trầm bổng của bạn.",
+                "Dưới ánh đèn sân khấu, ROY tỏa sáng bằng chính đam mê thuần khiết nhất.",
+                "Hãy để những giai điệu của chúng mình xoa dịu những ngày mệt mỏi của bạn.",
+                "Nhịp điệu của ROY chính là nhịp điệu rực rỡ nhất của thanh xuân này.",
+                "Chúng ta có thể quên lời một bài hát, nhưng cảm xúc nó mang lại thì còn mãi.",
+                "ROY - Nơi những trái tim đồng điệu cùng hòa chung một bài ca."
+            ],
+            "HCD": [
+                "Đôi bàn tay nhỏ làm nên những điều kỳ diệu, đó chính là tinh thần của HCD.",
+                "HCD tin rằng, mỗi món đồ thủ công đều mang trong mình một trái tim ấm áp.",
+                "Không chỉ là len, giấy hay vải, chúng mình đan dệt nên tình yêu thương và sự sẻ chia.",
+                "Một hành động nhỏ, một ý nghĩa lớn - HCD luôn hướng về những điều tốt đẹp nhất.",
+                "Từ thiện không phải là cho đi những gì dư thừa, mà là chia sẻ từ chính trái tim.",
+                "Mỗi sản phẩm bạn cầm trên tay là biết bao sự tỉ mỉ, kiên nhẫn và chân thành từ HCD.",
+                "Chúng mình làm đẹp cho đời không chỉ bằng đồ thủ công, mà bằng cả lòng nhân ái.",
+                "Ở HCD, sự khéo léo kết hợp cùng lòng tốt sẽ tạo nên những phép màu có thật.",
+                "Hạnh phúc lớn nhất của HCD là nhìn thấy nụ cười từ những điều nhỏ bé chúng mình tạo ra.",
+                "Tự tay làm nên những món quà, gửi gắm tình yêu đến những nơi cần ánh sáng."
+            ],
+            "WEIRDO": [
+                "Weirdo không ngại khác biệt, vì sự khác biệt tạo nên những bước nhảy độc nhất.",
+                "Âm nhạc bật lên, thế giới xung quanh nhòa đi, chỉ còn lại Weirdo và đam mê rực cháy.",
+                "Chúng mình không chỉ chuyển động cơ thể, chúng mình đang giải phóng tâm hồn.",
+                "Nhảy múa là ngôn ngữ ẩn giấu của tâm hồn, và Weirdo là những người phiên dịch.",
+                "Mồ hôi trên phòng tập ngày hôm nay là ánh hào quang trên sân khấu ngày mai.",
+                "Đừng ngại 'weird' (kỳ lạ), hãy tự hào vì bạn mang một màu sắc không thể trộn lẫn.",
+                "Từng nhịp điệu, từng bước chân, Weirdo thổi bùng ngọn lửa thanh xuân.",
+                "Sân khấu này là của chúng ta, hãy nhảy như không có ngày mai!",
+                "Ở Weirdo, mọi rào cản đều bị phá vỡ bởi sự tự do của hình thể.",
+                "Hãy để đôi chân kể câu chuyện mà đôi môi không thể nói thành lời."
+            ]
+        };
+
         function getDeviceId() {
             let deviceId = localStorage.getItem('dpibank_device_id');
             if (!deviceId) {
@@ -911,6 +962,26 @@
             const menuContainer = document.getElementById('menu-container');
             if (!keyword) return hienLoi("Vui lòng nhập tên lớp hoặc tên món cần tìm!");
             
+            const searchKey = keyword.toUpperCase();
+            let quoteHtml = '';
+            
+            if (clubQuotes[searchKey]) {
+                const quotes = clubQuotes[searchKey];
+                const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+                
+                let icon = "✨";
+                if (searchKey === "PCI") icon = "📸";
+                if (searchKey === "ROY") icon = "🎵";
+                if (searchKey === "HCD") icon = "🧶";
+                if (searchKey === "WEIRDO") icon = "🕺";
+
+                quoteHtml = `
+                <div style="background: linear-gradient(135deg, #f8f9fa, #eef2f5); padding: 20px; border-radius: 12px; margin-bottom: 20px; border-left: 5px solid #007bff; box-shadow: 0 5px 15px rgba(0,0,0,0.05); text-align: center; animation: slideDown 0.4s ease forwards;">
+                    <span style="font-size: 28px; display: block; margin-bottom: 8px;">${icon}</span>
+                    <i style="color: #444; font-size: 14.5px; line-height: 1.6; font-weight: 500;">"${randomQuote}"</i>
+                </div>`;
+            }
+
             menuContainer.innerHTML = '<p style="text-align:center; color:#555;">Đang tìm kiếm...</p>';
             
             const { data: menu, error } = await db.from('thuc_don')
@@ -918,17 +989,18 @@
                 .or(`lop.ilike.%${keyword}%,ten_mon.ilike.%${keyword}%`);
             
             if (error || !menu || menu.length === 0) {
-                menuContainer.innerHTML = `<p style="text-align:center; color:#dc3545; font-weight:bold;">Không tìm thấy món ăn hoặc gian hàng nào phù hợp!</p>`;
+                menuContainer.innerHTML = quoteHtml + `<p style="text-align:center; color:#dc3545; font-weight:bold;">Không tìm thấy món ăn hoặc gian hàng nào phù hợp!</p>`;
                 return;
             }
 
-            const isSingleClassSearch = menu.every(m => m.lop.toUpperCase() === keyword.toUpperCase());
+            const isSingleClassSearch = menu.every(m => m.lop.toUpperCase() === searchKey);
 
-            let htmlStr = '';
+            let htmlStr = quoteHtml; 
+            
             if (isSingleClassSearch) {
                 htmlStr += `
                 <div style="background: #fff8e1; padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px dashed #ffc107;">
-                    <label style="font-size: 12px; font-weight: bold; color: #d39e00; display:block; margin-bottom: 5px;">🎉 Dùng Voucher Lớp ${keyword.toUpperCase()}</label>
+                    <label style="font-size: 12px; font-weight: bold; color: #d39e00; display:block; margin-bottom: 5px;">🎉 Dùng Voucher Lớp ${searchKey}</label>
                     <input type="text" id="buyer-voucher-code" placeholder="Nhập mã giảm giá..." style="width: 100%; padding: 10px; border: 1px solid #ffe082; border-radius: 6px; text-transform: uppercase;">
                 </div>`;
             }
